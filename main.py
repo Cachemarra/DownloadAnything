@@ -273,6 +273,18 @@ async def serve_index():
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def serve_privacy_policy():
+    html_path = pathlib.Path(__file__).parent / "templates" / "privacy_policy.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def serve_about():
+    html_path = pathlib.Path(__file__).parent / "templates" / "about.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
 @app.post("/api/info")
 async def get_info(body: InfoRequest):
     ydl_opts = {

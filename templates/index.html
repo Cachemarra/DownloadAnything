@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Download Anything - Video & Audio Downloader</title>
+  <title>Download Anything - Video &amp; Audio Downloader</title>
+  <meta name="description" content="Download videos and audio from anywhere on the web. Free, fast, and private — no sign-up required."/>
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -16,261 +17,615 @@
       darkMode: "class",
       theme: {
         extend: {
-          "colors": {
-            "on-surface-variant": "#494551",
-            "surface-container": "#f2ecf4",
-            "outline": "#7a7582",
-            "inverse-primary": "#cfbcff",
-            "primary": "#cfbcff",
-            "error": "#ffb4ab",
-            "outline-variant": "#cbc4d2",
-            "on-surface": "#e6e0e9",
-            "inverse-on-surface": "#322f35",
-            "error-container": "#93000a",
-            "on-tertiary-fixed-variant": "#594400",
-            "secondary": "#cdc0e9",
-            "on-tertiary-container": "#ffe089",
-            "background": "#141218",
-            "on-tertiary": "#3f3000",
-            "on-secondary": "#342b4b",
-            "on-error": "#690005",
-            "on-tertiary-fixed": "#241a00",
-            "tertiary-container": "#594400",
-            "surface-bright": "#3b383e",
-            "secondary-fixed-dim": "#cdc0e9",
-            "on-secondary-fixed": "#1f1635",
-            "on-primary-fixed-variant": "#4f378a",
-            "surface-container-lowest": "#0f0d13",
-            "surface": "#141218",
-            "surface-container-highest": "#36343b",
-            "on-primary": "#381e72",
-            "surface-variant": "#494551",
-            "inverse-surface": "#e6e0e9",
-            "on-secondary-container": "#e1d4fd",
-            "surface-container-low": "#1d1b20",
-            "secondary-fixed": "#e9ddff",
-            "secondary-container": "#4b4263",
-            "primary-container": "#4f378a",
-            "on-primary-fixed": "#22005d",
-            "on-secondary-fixed-variant": "#4b4263",
-            "surface-container-high": "#2b2930",
-            "on-error-container": "#ffdad6",
-            "tertiary": "#e7c365",
-            "tertiary-fixed-dim": "#e7c365",
-            "on-background": "#e6e0e9",
-            "surface-tint": "#cfbcff",
-            "tertiary-fixed": "#ffdf93",
-            "primary-fixed-dim": "#cfbcff",
-            "surface-dim": "#141218",
-            "on-primary-container": "#e9ddff",
-            "primary-fixed": "#e9ddff"
+          fontFamily: {
+            "display":  ["Newsreader", "serif"],
+            "body":     ["Hanken Grotesk", "sans-serif"],
+            "mono":     ["JetBrains Mono", "monospace"],
           },
-          "borderRadius": {
-            "DEFAULT": "0.125rem",
-            "lg": "0.25rem",
-            "xl": "0.5rem",
-            "full": "9999px"
-          },
-          "fontFamily": {
-            "display-lg": ["Newsreader", "serif"],
-            "headline-md-mobile": ["Newsreader", "serif"],
-            "body-lg": ["Hanken Grotesk", "sans-serif"],
-            "body-md": ["Hanken Grotesk", "sans-serif"],
-            "headline-md": ["Newsreader", "serif"],
-            "headline-sm": ["Newsreader", "serif"],
-            "label-md": ["JetBrains Mono", "monospace"],
-            "headline-lg": ["Newsreader", "serif"],
-            "headline-lg-mobile": ["Newsreader", "serif"],
-            "label-sm": ["JetBrains Mono", "monospace"]
-          },
-          "fontSize": {
-            "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "400" }],
-            "headline-md-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "500" }],
-            "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
-            "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
-            "headline-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }],
-            "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "500" }],
-            "label-md": ["14px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
-            "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "500" }],
-            "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "500" }],
-            "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500" }]
-          }
         },
       },
     }
   </script>
+
   <style>
-    .tactile-shadow {
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    /* -----------------------------------------------------------------------
+       Vellum Minimalist – CSS Custom Properties
+       Light mode = default; .dark overrides to Midnight Vellum.
+    ----------------------------------------------------------------------- */
+    :root {
+      --color-bg:                  #fdf7ff;
+      --color-surface:             #fdf7ff;
+      --color-surface-low:         #f8f2fa;
+      --color-surface-mid:         #f2ecf4;
+      --color-surface-high:        #ece6ee;
+      --color-surface-highest:     #e6e0e9;
+      --color-on-surface:          #1d1b20;
+      --color-on-surface-var:      #494551;
+      --color-outline:             #7a7582;
+      --color-outline-var:         #cbc4d2;
+      --color-primary:             #4f378a;
+      --color-on-primary:          #ffffff;
+      --color-primary-container:   #6750a4;
+      --color-on-primary-container:#e0d2ff;
+      --color-secondary:           #63597c;
+      --color-secondary-container: #e1d4fd;
+      --color-on-secondary-container: #645a7d;
+      --color-tertiary:            #765b00;
+      --color-tertiary-container:  #c9a74d;
+      --color-on-tertiary-container:#503d00;
+      --color-error:               #ba1a1a;
+      --color-error-container:     #ffdad6;
+      --color-on-error-container:  #93000a;
+      --color-on-tertiary:         #ffffff;
+      --shadow-card: 0 4px 32px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+      --shadow-btn:  0 2px 8px rgba(79,55,138,0.18);
     }
-    .inner-shadow-soft {
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+    .dark {
+      --color-bg:                  #141218;
+      --color-surface:             #141218;
+      --color-surface-low:         #1d1b20;
+      --color-surface-mid:         #232127;
+      --color-surface-high:        #2b2930;
+      --color-surface-highest:     #36343b;
+      --color-on-surface:          #e6e0e9;
+      --color-on-surface-var:      #cac4d0;
+      --color-outline:             #938f99;
+      --color-outline-var:         #49454f;
+      --color-primary:             #cfbcff;
+      --color-on-primary:          #381e72;
+      --color-primary-container:   #4f378a;
+      --color-on-primary-container:#e9ddff;
+      --color-secondary:           #cdc0e9;
+      --color-secondary-container: #4b4263;
+      --color-on-secondary-container: #e1d4fd;
+      --color-tertiary:            #e7c365;
+      --color-tertiary-container:  #594400;
+      --color-on-tertiary-container:#ffe089;
+      --color-error:               #ffb4ab;
+      --color-error-container:     #93000a;
+      --color-on-error-container:  #ffdad6;
+      --color-on-tertiary:         #3f3000;
+      --shadow-card: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-btn:  0 0 12px rgba(207,188,255,0.25);
+    }
+
+    /* -----------------------------------------------------------------------
+       Base resets using CSS vars
+    ----------------------------------------------------------------------- */
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-on-surface);
+      font-family: "Hanken Grotesk", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* -----------------------------------------------------------------------
+       Theme Toggle Slider
+    ----------------------------------------------------------------------- */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .theme-toggle .toggle-icon {
+      font-size: 18px;
+      color: var(--color-on-surface-var);
+      transition: color 0.2s ease, opacity 0.2s ease;
+      user-select: none;
+    }
+    .theme-toggle-track {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border-radius: 9999px;
+      background-color: var(--color-outline-var);
+      transition: background-color 0.25s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .dark .theme-toggle-track {
+      background-color: var(--color-primary-container);
+    }
+    .theme-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 9999px;
+      background-color: var(--color-on-primary);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+    .dark .theme-toggle-thumb {
+      transform: translateX(20px);
+      background-color: var(--color-primary);
+    }
+
+    /* -----------------------------------------------------------------------
+       Header
+    ----------------------------------------------------------------------- */
+    .app-header {
+      background-color: var(--color-bg);
+      border-bottom: 1px solid var(--color-outline-var);
+      width: 100%;
+      height: 72px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+    }
+    .brand-link {
+      font-family: "Newsreader", serif;
+      font-size: clamp(22px, 4vw, 28px);
+      font-weight: 600;
+      color: var(--color-primary);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      transition: opacity 0.15s ease;
+    }
+    .brand-link:hover { opacity: 0.8; }
+
+    .nav-link {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--color-primary);
+      text-decoration: none;
+      border-bottom: 2px solid var(--color-primary);
+      padding-bottom: 2px;
+      transition: opacity 0.15s ease;
+    }
+    .nav-link:hover { opacity: 0.75; }
+
+    /* -----------------------------------------------------------------------
+       Cards
+    ----------------------------------------------------------------------- */
+    .card {
+      background-color: var(--color-surface-low);
+      border: 1px solid var(--color-outline-var);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card-main {
+      background-color: var(--color-surface);
+    }
+    .dark .card-main {
+      background-color: #1a1824;
+    }
+
+    /* -----------------------------------------------------------------------
+       Input
+    ----------------------------------------------------------------------- */
+    .url-input {
+      background-color: var(--color-surface-low);
+      color: var(--color-on-surface);
+      border: 1.5px solid var(--color-outline-var);
+      border-radius: 9999px;
+      padding: 14px 24px 14px 48px;
+      font-family: "Hanken Grotesk", sans-serif;
+      font-size: 16px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+    }
+    .url-input::placeholder { color: var(--color-outline); }
+    .url-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79,55,138,0.12);
+    }
+    .dark .url-input:focus {
+      box-shadow: 0 0 0 3px rgba(207,188,255,0.15);
+    }
+
+    /* -----------------------------------------------------------------------
+       Fetch Button
+    ----------------------------------------------------------------------- */
+    .fetch-btn {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border: none;
+      border-radius: 9999px;
+      padding: 14px 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      box-shadow: var(--shadow-btn);
+      transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    }
+    .fetch-btn:hover  { opacity: 0.88; box-shadow: 0 4px 16px rgba(79,55,138,0.3); }
+    .fetch-btn:active { transform: scale(0.98); }
+    .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* -----------------------------------------------------------------------
+       Download format cards
+    ----------------------------------------------------------------------- */
+    .format-card {
+      background-color: var(--color-surface-low);
+      border: 1px solid color-mix(in srgb, var(--color-outline-var) 50%, transparent);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .format-card:hover { background-color: var(--color-surface-mid); }
+
+    .format-icon-bg-secondary {
+      background-color: var(--color-secondary-container);
+      color: var(--color-on-secondary-container);
+    }
+    .format-icon-bg-neutral {
+      background-color: var(--color-surface-high);
+      color: var(--color-on-surface-var);
+    }
+    .format-icon-bg-tertiary {
+      background-color: var(--color-tertiary-container);
+      color: var(--color-on-tertiary-container);
+    }
+    .format-download-btn {
+      color: var(--color-primary);
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .format-card:hover .format-download-btn {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .format-download-btn-tertiary { color: var(--color-tertiary); }
+    .format-card:hover .format-download-btn-tertiary {
+      background-color: var(--color-tertiary);
+      color: var(--color-on-tertiary);
+    }
+
+    /* -----------------------------------------------------------------------
+       Progress bar
+    ----------------------------------------------------------------------- */
+    .progress-track {
+      background-color: var(--color-surface-high);
+      border-radius: 9999px;
+      height: 10px;
+      overflow: hidden;
+      width: 100%;
     }
     .progress-fill {
+      background-color: var(--color-primary);
+      height: 100%;
+      border-radius: 9999px;
       transition: width 0.3s ease-in-out;
     }
+
+    /* -----------------------------------------------------------------------
+       Error banner
+    ----------------------------------------------------------------------- */
+    .error-banner {
+      background-color: color-mix(in srgb, var(--color-error-container) 40%, transparent);
+      border: 1px solid color-mix(in srgb, var(--color-error) 50%, transparent);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    /* -----------------------------------------------------------------------
+       Ad placeholder
+    ----------------------------------------------------------------------- */
+    .ad-placeholder {
+      background-color: var(--color-surface-low);
+      border: 1px solid color-mix(in srgb, var(--color-outline-var) 30%, transparent);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-outline);
+      user-select: none;
+      transition: background-color 0.25s ease;
+    }
+
+    /* -----------------------------------------------------------------------
+       Footer
+    ----------------------------------------------------------------------- */
+    .app-footer {
+      background-color: var(--color-surface-low);
+      border-top: 1px solid var(--color-outline-var);
+      padding: 32px 0;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .footer-link {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--color-on-surface-var);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .footer-link:hover { color: var(--color-primary); text-decoration: underline; text-underline-offset: 4px; }
+
+    /* -----------------------------------------------------------------------
+       Utilities
+    ----------------------------------------------------------------------- */
+    .hidden { display: none !important; }
+
     @keyframes spin-ccw {
       from { transform: rotate(0deg); }
-      to { transform: rotate(-360deg); }
+      to   { transform: rotate(-360deg); }
     }
-    .animate-spin-ccw {
-      animation: spin-ccw 1s linear infinite;
+    .animate-spin-ccw { animation: spin-ccw 1s linear infinite; }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background-color: var(--color-surface-high);
+      margin: 8px 0;
     }
-    .hidden { display: none !important; }
+
+    /* Thumbnail overlay */
+    .thumb-overlay { background-color: rgba(0,0,0,0.08); }
+    .dark .thumb-overlay { background-color: rgba(0,0,0,0.2); }
+
+    /* Play button */
+    .play-btn {
+      background-color: rgba(253, 247, 255, 0.9);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-card);
+    }
+    .dark .play-btn {
+      background-color: rgba(26, 24, 36, 0.88);
+    }
+
+    /* Duration chip */
+    .duration-chip {
+      background-color: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+    }
   </style>
 </head>
-<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col antialiased">
+<body>
 
-  <!-- TopNavBar -->
-  <header class="w-full h-20 bg-background">
-    <div class="max-w-[1200px] mx-auto px-4 md:px-8 flex justify-between items-center w-full h-full">
-      <div class="font-display-lg text-3xl sm:text-display-lg font-semibold text-primary">
-        Download Anything
-      </div>
+  <!-- ===== TopNavBar ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <!-- Brand / Home Link -->
+      <a href="/" id="home-link" class="brand-link" title="Return to home">Download Anything</a>
+
+      <!-- Center Nav -->
       <nav class="hidden md:flex gap-6">
-        <a class="text-primary font-semibold border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">
-          <span class="font-label-md text-label-md">Browser</span>
-        </a>
+        <a class="nav-link" href="/">Browser</a>
       </nav>
-      <div class="flex items-center gap-3">
-        <button class="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200" onclick="document.documentElement.classList.toggle('dark')" title="Toggle Dark/Light Mode">
-          <span class="material-symbols-outlined dark:hidden">dark_mode</span>
-          <span class="material-symbols-outlined hidden dark:block">light_mode</span>
-        </button>
-        <button class="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200" title="Settings">
-          <span class="material-symbols-outlined">settings</span>
-        </button>
-        <button class="p-2 text-on-surface-variant hover:text-primary transition-colors duration-200" title="Help">
-          <span class="material-symbols-outlined">help</span>
+
+      <!-- Right Controls -->
+      <div style="display:flex; align-items:center; gap:16px;">
+        <!-- Dark/Light Mode Toggle Slider -->
+        <button
+          id="theme-toggle-btn"
+          class="theme-toggle"
+          title="Toggle dark / light mode"
+          aria-label="Toggle dark / light mode"
+          onclick="toggleTheme()"
+          style="background:none;border:none;padding:4px;"
+        >
+          <!-- Sun icon (light mode active indicator) -->
+          <span class="material-symbols-outlined toggle-icon" id="icon-sun" style="font-size:19px;" aria-hidden="true">light_mode</span>
+          <!-- Track + Thumb -->
+          <div class="theme-toggle-track" role="switch" aria-checked="false" id="toggle-track">
+            <div class="theme-toggle-thumb" id="toggle-thumb"></div>
+          </div>
+          <!-- Moon icon (dark mode active indicator) -->
+          <span class="material-symbols-outlined toggle-icon" id="icon-moon" style="font-size:19px;" aria-hidden="true">dark_mode</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 w-full py-8 md:py-16 px-4 md:px-8">
-    <div class="max-w-[1200px] w-full mx-auto grid grid-cols-1 lg:grid-cols-[200px_1fr_200px] gap-6 items-start">
-      
-      <!-- Left Ad Placeholder -->
-      <div class="w-full flex flex-col items-center justify-center min-h-[160px] lg:h-[400px] bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 text-outline select-none">
-        <span class="material-symbols-outlined mb-2 text-2xl">ad_units</span>
-        <span class="font-label-md text-label-md uppercase tracking-wider text-xs">Advertisement</span>
+  <!-- ===== Main Content ===== -->
+  <main style="flex:1; padding: 48px 16px;">
+    <div style="max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr; gap:24px;" id="main-grid">
+
+      <!-- On large screens: 3-col layout -->
+      <style>
+        @media (min-width: 1024px) {
+          #main-grid { grid-template-columns: 200px 1fr 200px; }
+        }
+      </style>
+
+      <!-- Left Ad -->
+      <div class="ad-placeholder" style="min-height:160px; padding:16px;" id="ad-left">
+        <span class="material-symbols-outlined" style="font-size:24px; margin-bottom:8px;">ad_units</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase;">Advertisement</span>
       </div>
 
       <!-- Central Downloader Card -->
-      <div class="w-full bg-surface-container-lowest rounded-xl p-6 md:p-8 tactile-shadow border border-surface-container-high relative overflow-hidden">
-        
-        <!-- Input Section -->
-        <div class="flex flex-col sm:flex-row gap-3 items-center w-full mb-8">
-          <div class="relative flex-1 w-full">
-            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant">link</span>
-            <input id="url-input" class="w-full bg-surface-container-low text-on-surface font-body-lg text-body-lg rounded-full py-4 pl-12 pr-6 text-center sm:text-left border-none focus:ring-2 focus:ring-primary inner-shadow-soft outline-none transition-all placeholder:text-outline" placeholder="Paste your video link here..." type="text" autocomplete="off" spellcheck="false"/>
+      <div class="card card-main" style="padding: 32px 28px; position:relative; overflow:hidden;">
+
+        <!-- Input Row -->
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;" id="input-row">
+          <style>
+            @media (min-width:640px) { #input-row { flex-direction:row; align-items:center; } }
+          </style>
+          <div style="position:relative; flex:1;">
+            <span class="material-symbols-outlined" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--color-outline-var);font-size:20px;pointer-events:none;">link</span>
+            <input
+              id="url-input"
+              class="url-input"
+              type="text"
+              placeholder="Paste your video link here..."
+              autocomplete="off"
+              spellcheck="false"
+            />
           </div>
-          <button id="fetch-btn" class="w-full sm:w-auto bg-primary text-on-primary font-label-md text-label-md px-8 py-4 rounded-full hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed">
-            <span id="fetch-icon" class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">download</span>
+          <button id="fetch-btn" class="fetch-btn" style="min-width:130px; justify-content:center;">
+            <span id="fetch-icon" class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:20px;">download</span>
             <span id="fetch-text">Fetch</span>
           </button>
         </div>
 
-        <!-- Error Alert Banner -->
-        <div id="error-banner" class="hidden mb-6 bg-error-container/40 border border-error/50 rounded-xl p-4 flex items-start gap-3">
-          <span class="material-symbols-outlined text-error shrink-0 mt-0.5">error</span>
-          <p id="error-text" class="font-body-md text-on-error-container leading-snug"></p>
+        <!-- Error Banner -->
+        <div id="error-banner" class="error-banner hidden" style="margin-bottom:24px;">
+          <span class="material-symbols-outlined" style="color:var(--color-error);flex-shrink:0;margin-top:2px;">error</span>
+          <p id="error-text" style="font-family:'Hanken Grotesk',sans-serif; font-size:15px; color:var(--color-on-error-container); margin:0;"></p>
         </div>
 
-        <!-- Dynamic Progress Bar -->
-        <div id="progress-container" class="hidden mb-6 bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <span id="progress-status-icon" class="material-symbols-outlined text-primary animate-spin-ccw">sync</span>
-              <span id="progress-status-text" class="font-label-md text-label-md text-on-surface">Preparing...</span>
+        <!-- Progress -->
+        <div id="progress-container" class="hidden" style="margin-bottom:24px; background-color:var(--color-surface-low); border:1px solid color-mix(in srgb, var(--color-outline-var) 30%, transparent); border-radius:12px; padding:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="progress-status-icon" class="material-symbols-outlined animate-spin-ccw" style="color:var(--color-primary);">sync</span>
+              <span id="progress-status-text" style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.05em; color:var(--color-on-surface);">Preparing...</span>
             </div>
-            <span id="progress-percentage" class="font-label-md text-label-md text-primary font-bold">0%</span>
+            <span id="progress-percentage" style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--color-primary);">0%</span>
           </div>
-          <div class="w-full bg-surface-container-high rounded-full h-3 overflow-hidden">
-            <div id="progress-bar-fill" class="bg-primary h-full rounded-full progress-fill" style="width: 0%;"></div>
+          <div class="progress-track">
+            <div id="progress-bar-fill" class="progress-fill" style="width:0%;"></div>
           </div>
         </div>
 
         <!-- Preview Section -->
-        <div id="preview-section" class="hidden flex flex-col gap-6">
-          
-          <!-- Video Thumbnail -->
-          <div class="relative w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high border border-outline-variant/30 flex items-center justify-center group">
-            <img id="preview-thumb" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300" src="" alt="Video thumbnail"/>
-            <div class="absolute inset-0 bg-on-surface/10"></div>
-            <button class="relative z-10 w-16 h-16 bg-surface-container-lowest/90 backdrop-blur-sm rounded-full flex items-center justify-center text-on-surface tactile-shadow hover:scale-105 transition-transform">
-              <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+        <div id="preview-section" class="hidden" style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Thumbnail -->
+          <div style="position:relative; width:100%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; background-color:var(--color-surface-high); border:1px solid color-mix(in srgb,var(--color-outline-var) 30%, transparent);">
+            <img id="preview-thumb" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.92;transition:opacity 0.3s ease;" src="" alt="Video thumbnail"/>
+            <div class="thumb-overlay" style="position:absolute;inset:0;"></div>
+            <button class="play-btn" style="position:relative;z-index:10;width:56px;height:56px;border-radius:9999px;border:none;cursor:default;display:flex;align-items:center;justify-content:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
+              <span class="material-symbols-outlined" style="font-size:28px;font-variation-settings:'FILL' 1;color:var(--color-on-surface);">play_arrow</span>
             </button>
-            <div id="preview-duration" class="absolute bottom-4 right-4 bg-on-surface/80 backdrop-blur-md text-on-primary font-label-md text-label-md px-3 py-1 rounded-full text-sm">--:--</div>
+            <div id="preview-duration" class="duration-chip" style="position:absolute;bottom:12px;right:12px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.04em;padding:4px 10px;border-radius:9999px;">--:--</div>
           </div>
 
           <!-- Video Details -->
-          <div class="flex flex-col gap-1">
-            <h2 id="preview-title" class="font-headline-sm text-headline-sm text-on-surface line-clamp-2"></h2>
-            <p class="font-body-sm text-body-md text-on-surface-variant flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">account_circle</span>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <h2 id="preview-title" style="font-family:'Newsreader',serif;font-size:22px;font-weight:500;line-height:1.3;color:var(--color-on-surface);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"></h2>
+            <p style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--color-on-surface-var);margin:0;">
+              <span class="material-symbols-outlined" style="font-size:17px;">account_circle</span>
               <span id="preview-author-info"></span>
             </p>
           </div>
 
-          <div class="w-full h-px bg-surface-container-high my-2"></div>
+          <div class="divider"></div>
 
-          <!-- Download Options Grid -->
-          <div id="download-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Dynamically populated formats -->
+          <!-- Download Options -->
+          <div id="download-options-grid" style="display:grid;grid-template-columns:1fr;gap:12px;">
+            <style>
+              @media (min-width:640px) { #download-options-grid { grid-template-columns: 1fr 1fr; } }
+            </style>
           </div>
         </div>
+
       </div>
 
-      <!-- Right Ad Placeholder -->
-      <div class="w-full flex flex-col items-center justify-center min-h-[160px] lg:h-[400px] bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 text-outline select-none">
-        <span class="material-symbols-outlined mb-2 text-2xl">ad_units</span>
-        <span class="font-label-md text-label-md uppercase tracking-wider text-xs">Advertisement</span>
+      <!-- Right Ad -->
+      <div class="ad-placeholder" style="min-height:160px; padding:16px;" id="ad-right">
+        <span class="material-symbols-outlined" style="font-size:24px; margin-bottom:8px;">ad_units</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase;">Advertisement</span>
       </div>
 
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-surface-container-low w-full py-8 border-t border-outline-variant">
-    <div class="max-w-[1200px] mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="font-display-lg text-3xl text-primary">
-        Download Anything
+  <!-- ===== Footer ===== -->
+  <footer class="app-footer">
+    <div style="max-width:1200px; margin:0 auto; padding:0 24px; display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;">
+      <style>
+        @media (min-width:768px) {
+          .footer-inner { flex-direction:row !important; justify-content:space-between !important; }
+        }
+      </style>
+      <div class="footer-inner" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;">
+        <a href="/" class="brand-link" style="font-size:22px;">Download Anything</a>
+        <p style="font-family:'Hanken Grotesk',sans-serif; font-size:14px; color:var(--color-on-surface-var); margin:0;">
+          © 2026 Download Anything. Handcrafted for your archives.
+        </p>
+        <nav style="display:flex; gap:20px; align-items:center;">
+          <a class="footer-link" href="/privacy-policy">Privacy Policy</a>
+          <span style="color:var(--color-outline-var);">·</span>
+          <a class="footer-link" href="/about">About</a>
+        </nav>
       </div>
-      <div class="font-body-md text-body-md text-on-surface-variant text-center">
-        © 2026 Download Anything. Handcrafted for your archives.
-      </div>
-      <nav class="flex gap-4">
-        <a class="font-label-md text-label-md text-on-surface-variant hover:underline decoration-primary/30 underline-offset-4" href="#">Privacy Policy</a>
-        <a class="font-label-md text-label-md text-on-surface-variant hover:underline decoration-primary/30 underline-offset-4" href="#">Terms of Service</a>
-        <a class="font-label-md text-label-md text-on-surface-variant hover:underline decoration-primary/30 underline-offset-4" href="#">Support</a>
-      </nav>
     </div>
   </footer>
 
-  <!-- Application Logic JavaScript -->
+  <!-- ===== Theme & App Logic ===== -->
   <script>
+    // -----------------------------------------------------------------------
+    // Theme management
+    // -----------------------------------------------------------------------
+    (function () {
+      const stored = localStorage.getItem("theme");
+      // Default: light mode
+      if (stored === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      document.getElementById("toggle-track").setAttribute("aria-checked", isDark ? "true" : "false");
+    }
+
+    // Set initial aria-checked
+    document.addEventListener("DOMContentLoaded", function () {
+      const isDark = document.documentElement.classList.contains("dark");
+      document.getElementById("toggle-track").setAttribute("aria-checked", isDark ? "true" : "false");
+    });
+
+    // -----------------------------------------------------------------------
+    // Download App Logic
+    // -----------------------------------------------------------------------
     let currentVideoUrl = "";
     let activeEventSource = null;
 
-    const urlInput = document.getElementById("url-input");
-    const fetchBtn = document.getElementById("fetch-btn");
-    const fetchIcon = document.getElementById("fetch-icon");
-    const fetchText = document.getElementById("fetch-text");
+    const urlInput   = document.getElementById("url-input");
+    const fetchBtn   = document.getElementById("fetch-btn");
+    const fetchIcon  = document.getElementById("fetch-icon");
+    const fetchText  = document.getElementById("fetch-text");
 
-    const errorBanner = document.getElementById("error-banner");
-    const errorText = document.getElementById("error-text");
+    const errorBanner  = document.getElementById("error-banner");
+    const errorText    = document.getElementById("error-text");
 
-    const previewSection = document.getElementById("preview-section");
-    const previewThumb = document.getElementById("preview-thumb");
-    const previewDuration = document.getElementById("preview-duration");
-    const previewTitle = document.getElementById("preview-title");
-    const previewAuthorInfo = document.getElementById("preview-author-info");
+    const previewSection      = document.getElementById("preview-section");
+    const previewThumb        = document.getElementById("preview-thumb");
+    const previewDuration     = document.getElementById("preview-duration");
+    const previewTitle        = document.getElementById("preview-title");
+    const previewAuthorInfo   = document.getElementById("preview-author-info");
     const downloadOptionsGrid = document.getElementById("download-options-grid");
 
-    const progressContainer = document.getElementById("progress-container");
-    const progressBarFill = document.getElementById("progress-bar-fill");
+    const progressContainer  = document.getElementById("progress-container");
+    const progressBarFill    = document.getElementById("progress-bar-fill");
     const progressPercentage = document.getElementById("progress-percentage");
     const progressStatusText = document.getElementById("progress-status-text");
     const progressStatusIcon = document.getElementById("progress-status-icon");
@@ -280,15 +635,13 @@
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
       const s = Math.floor(seconds % 60);
-      if (h > 0) {
-        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-      }
+      if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
     function formatBytes(bytes) {
       if (!bytes || bytes <= 0) return "";
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024)       return `${(bytes / 1024).toFixed(1)} KB`;
       if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
       return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
     }
@@ -317,73 +670,67 @@
 
     function renderFormatsGrid(formats) {
       downloadOptionsGrid.innerHTML = "";
-
       if (!formats || formats.length === 0) return;
 
-      formats.forEach((fmt, index) => {
-        const isMp3 = fmt.id === "mp3";
+      formats.forEach((fmt) => {
+        const isMp3      = fmt.id === "mp3";
+        const height     = isMp3 ? 0 : (parseInt(fmt.id) || 0);
         const isFullSpan = isMp3 && (formats.length % 2 !== 0);
 
-        let iconName = "sd";
-        let iconBg = "bg-surface-container-high text-on-surface-variant";
-        let hoverBg = "hover:bg-secondary-container/30";
-        let btnColor = "text-primary group-hover:bg-primary group-hover:text-on-primary";
+        let iconName   = "sd";
+        let iconBgClass = "format-icon-bg-neutral";
+        let dlBtnClass  = "format-download-btn";
 
         if (isMp3) {
-          iconName = "audio_file";
-          iconBg = "bg-tertiary-container text-on-tertiary-container";
-          hoverBg = "hover:bg-tertiary-container/30";
-          btnColor = "text-tertiary group-hover:bg-tertiary group-hover:text-on-tertiary";
-        } else {
-          const height = parseInt(fmt.id) || 0;
-          if (height >= 1080) {
-            iconName = "hd";
-            iconBg = "bg-secondary-container text-on-secondary-container";
-          }
+          iconName    = "audio_file";
+          iconBgClass = "format-icon-bg-tertiary";
+          dlBtnClass  = "format-download-btn format-download-btn-tertiary";
+        } else if (height >= 1080) {
+          iconName    = "hd";
+          iconBgClass = "format-icon-bg-secondary";
         }
 
         const sizeStr = fmt.filesize ? ` • ${formatBytes(fmt.filesize)}` : "";
 
         const card = document.createElement("div");
-        card.className = `bg-surface-container-low ${hoverBg} transition-colors border border-outline-variant/50 rounded-lg p-4 flex items-center justify-between cursor-pointer group ${isFullSpan ? 'md:col-span-2' : ''}`;
+        card.className = "format-card";
+        if (isFullSpan) card.style.gridColumn = "1 / -1";
         card.setAttribute("onclick", `triggerDownload('${fmt.id}')`);
 
         card.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full ${iconBg} flex items-center justify-center">
-              <span class="material-symbols-outlined">${iconName}</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="${iconBgClass}" style="width:40px;height:40px;border-radius:9999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span class="material-symbols-outlined" style="font-size:20px;">${iconName}</span>
             </div>
-            <div class="flex flex-col">
-              <span class="font-label-md text-label-md text-on-surface">${fmt.label}</span>
-              <span class="font-body-sm text-body-md text-outline">${fmt.sublabel}${sizeStr}</span>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--color-on-surface);">${fmt.label}</span>
+              <span style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:var(--color-outline);">${fmt.sublabel}${sizeStr}</span>
             </div>
           </div>
-          <button class="${btnColor} w-10 h-10 rounded-full flex items-center justify-center transition-colors">
-            <span class="material-symbols-outlined">download</span>
+          <button class="${dlBtnClass}">
+            <span class="material-symbols-outlined" style="font-size:20px;">download</span>
           </button>
         `;
-
         downloadOptionsGrid.appendChild(card);
       });
     }
 
     async function fetchMetadata() {
       const url = urlInput.value.trim();
-      if (!url) {
-        showError("Please enter a valid video link.");
-        return;
-      }
+      if (!url) { showError("Please enter a valid video link."); return; }
 
       hideError();
       previewSection.classList.add("hidden");
-      
+      previewSection.style.display = "none";
+
       progressContainer.classList.remove("hidden");
       progressBarFill.style.width = "100%";
-      progressBarFill.classList.add("animate-pulse");
+      progressBarFill.style.animation = "pulse 1.5s ease-in-out infinite";
       progressPercentage.textContent = "...";
       progressStatusText.textContent = "Preparing...";
       progressStatusIcon.textContent = "sync";
-      progressStatusIcon.className = "material-symbols-outlined text-primary animate-spin-ccw";
+      progressStatusIcon.className = "material-symbols-outlined animate-spin-ccw";
+      progressStatusIcon.style.color = "var(--color-primary)";
 
       setFetchLoading(true);
 
@@ -391,39 +738,32 @@
         const response = await fetch("/api/info", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url })
+          body: JSON.stringify({ url })
         });
-
         const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Failed to fetch video information.");
 
-        if (!response.ok) {
-          throw new Error(data.detail || "Failed to fetch video information.");
-        }
+        currentVideoUrl             = url;
+        previewThumb.src            = data.thumbnail || "";
+        previewTitle.textContent    = data.title || "Video Title";
 
-        currentVideoUrl = url;
-        previewThumb.src = data.thumbnail || "";
-        previewTitle.textContent = data.title || "Video Title";
-        
         let estSizeStr = "";
-        if (data.formats && data.formats.length > 0) {
-          const maxFmt = data.formats[0];
-          if (maxFmt.filesize) {
-            estSizeStr = ` • ${formatBytes(maxFmt.filesize)} Estimated`;
-          }
+        if (data.formats && data.formats.length > 0 && data.formats[0].filesize) {
+          estSizeStr = ` • ${formatBytes(data.formats[0].filesize)} Estimated`;
         }
-        
         previewAuthorInfo.textContent = `${data.author || "Unknown Creator"}${estSizeStr}`;
-        previewDuration.textContent = formatDuration(data.duration);
+        previewDuration.textContent   = formatDuration(data.duration);
 
         renderFormatsGrid(data.formats || []);
 
         progressContainer.classList.add("hidden");
-        progressBarFill.classList.remove("animate-pulse");
+        progressBarFill.style.animation = "";
         previewSection.classList.remove("hidden");
+        previewSection.style.display = "flex";
 
       } catch (err) {
         progressContainer.classList.add("hidden");
-        progressBarFill.classList.remove("animate-pulse");
+        progressBarFill.style.animation = "";
         showError(err.message || "Could not retrieve video details. Please verify the URL.");
       } finally {
         setFetchLoading(false);
@@ -431,79 +771,57 @@
     }
 
     fetchBtn.addEventListener("click", fetchMetadata);
-    urlInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") fetchMetadata();
-    });
+    urlInput.addEventListener("keydown", (e) => { if (e.key === "Enter") fetchMetadata(); });
 
     function generateTaskId() {
       return 'task-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
     }
 
     function triggerDownload(quality) {
-      if (!currentVideoUrl) {
-        showError("No video selected. Please fetch a video link first.");
-        return;
-      }
+      if (!currentVideoUrl) { showError("No video selected. Please fetch a video link first."); return; }
 
       hideError();
       const taskId = generateTaskId();
 
       progressContainer.classList.remove("hidden");
-      progressBarFill.classList.remove("animate-pulse");
-      progressBarFill.style.width = "0%";
-      progressPercentage.textContent = "0%";
-      progressStatusText.textContent = "Preparing...";
-      
-      progressStatusIcon.textContent = "sync";
-      progressStatusIcon.className = "material-symbols-outlined text-primary animate-spin-ccw";
+      progressBarFill.style.animation = "";
+      progressBarFill.style.width     = "0%";
+      progressPercentage.textContent  = "0%";
+      progressStatusText.textContent  = "Preparing...";
+      progressStatusIcon.textContent  = "sync";
+      progressStatusIcon.className    = "material-symbols-outlined animate-spin-ccw";
+      progressStatusIcon.style.color  = "var(--color-primary)";
 
-      if (activeEventSource) {
-        activeEventSource.close();
-      }
+      if (activeEventSource) { activeEventSource.close(); }
 
       const videoTitle = previewTitle.textContent || "download";
-
-      // Connect to SSE stream which triggers the background download and reports progress
       const sseUrl = `/api/progress/${taskId}?url=${encodeURIComponent(currentVideoUrl)}&quality=${encodeURIComponent(quality)}`;
       activeEventSource = new EventSource(sseUrl);
 
       activeEventSource.onmessage = function(event) {
         try {
           const payload = JSON.parse(event.data);
-          
+
           if (payload.error) {
             showError(payload.error);
             progressContainer.classList.add("hidden");
-            if (activeEventSource) {
-              activeEventSource.close();
-              activeEventSource = null;
-            }
+            if (activeEventSource) { activeEventSource.close(); activeEventSource = null; }
             return;
           }
 
           if (typeof payload.progress === "number") {
             const pct = Math.min(100, Math.max(0, payload.progress));
-            progressBarFill.style.width = `${pct}%`;
+            progressBarFill.style.width    = `${pct}%`;
             progressPercentage.textContent = `${pct}%`;
-
-            if (pct > 0 && pct < 100) {
-              progressStatusText.textContent = "Downloading...";
-            }
+            if (pct > 0 && pct < 100) progressStatusText.textContent = "Downloading...";
           }
 
           if (payload.done) {
             progressStatusText.textContent = "Complete!";
             progressStatusIcon.textContent = "check_circle";
-            progressStatusIcon.className = "material-symbols-outlined text-primary";
-            
-            if (activeEventSource) {
-              activeEventSource.close();
-              activeEventSource = null;
-            }
+            progressStatusIcon.className   = "material-symbols-outlined";
+            if (activeEventSource) { activeEventSource.close(); activeEventSource = null; }
 
-            // Trigger the file download via a programmatic anchor click.
-            // This is the only cross-browser reliable method — iframes silently
-            // ignore Content-Disposition: attachment responses in modern browsers.
             const fileDeliveryUrl = `/api/file/${taskId}?title=${encodeURIComponent(videoTitle)}`;
             const a = document.createElement("a");
             a.href = fileDeliveryUrl;
@@ -512,16 +830,11 @@
             a.click();
             document.body.removeChild(a);
           }
-        } catch (e) {
-          console.error("SSE parse error", e);
-        }
+        } catch (e) { console.error("SSE parse error", e); }
       };
 
       activeEventSource.onerror = function() {
-        if (activeEventSource) {
-          activeEventSource.close();
-          activeEventSource = null;
-        }
+        if (activeEventSource) { activeEventSource.close(); activeEventSource = null; }
       };
     }
   </script>

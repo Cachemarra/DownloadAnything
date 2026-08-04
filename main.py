@@ -92,22 +92,32 @@ def _clean_error_message(raw_msg: str) -> str:
     return clean.strip()
 
 
-def _clean_filename(name: str | None, ext: str) -> str:
+def _clean_filename(name: str | None, ext: str) -> tuple[str, str]:
+    """
+    Returns (ascii_filename, quoted_utf8_filename) for HTTP Content-Disposition headers.
+    RFC 6266 / RFC 5987 compliant. Guarantees 100% latin-1 header safety in Starlette/Uvicorn.
+    """
     if not name:
-        return f"download.{ext}"
+        return f"download.{ext}", f"download.{ext}"
+    
     clean = re.sub(r'[\\/*?:\x22<>|\r\n\t]', "", name)
     clean = re.sub(r"\s+", " ", clean).strip()
     if not clean:
         clean = "download"
-    return f"{clean}.{ext}"
+    utf8_filename = f"{clean}.{ext}"
+
+    ascii_clean = re.sub(r"[^\x20-\x7E]", "", clean).strip()
+    if not ascii_clean:
+        ascii_clean = "download"
+    ascii_filename = f"{ascii_clean}.{ext}"
+
+    quoted_utf8 = urllib.parse.quote(utf8_filename)
+    return ascii_filename, quoted_utf8
 
 
 def _make_progress_hook(task_id: str):
     """
     Track download progress.
-    IMPORTANT: We do NOT set done=True here because 'finished' fires after each
-    individual stream segment (video, then audio), NOT after the final ffmpeg merge.
-    We only track the rolling percentage so the progress bar stays accurate.
     done=True is set ONLY after yt_dlp.download() fully returns.
     """
     segment_count = [0]
@@ -122,12 +132,7 @@ def _make_progress_hook(task_id: str):
             downloaded = d.get("downloaded_bytes", 0) or 0
             total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
             if total > 0:
-                # Scale each segment: if 2 segments (video+audio), each is 50% of total
-                # We report progress across both segments combined
                 raw_pct = int(downloaded / total * 100)
-                # During segment 1 (video): progress is 0-50%
-                # During segment 2 (audio): progress is 50-95%
-                # After merge: 100%
                 if segment_count[0] == 0:
                     pct = int(raw_pct * 0.50)
                 elif segment_count[0] == 1:
@@ -137,9 +142,7 @@ def _make_progress_hook(task_id: str):
                 state["progress"] = min(pct, 99)
 
         elif status == "finished":
-            # A segment finished downloading — bump segment count
             segment_count[0] += 1
-            # Show 50% after video segment, 95% after audio (before merge)
             if segment_count[0] == 1:
                 state["progress"] = 50
             elif segment_count[0] >= 2:
@@ -309,8 +312,7 @@ async def progress_stream(
 ):
     """
     SSE endpoint. Starts the yt-dlp download in a thread executor, then streams
-    progress events. Sends done=true ONLY after yt_dlp.download() fully returns
-    (i.e., after ffmpeg merge is complete and the final file is on disk).
+    progress events. Sends done=true ONLY after yt_dlp.download() fully returns.
     """
     task_progress[task_id] = {"progress": 0, "done": False, "error": None, "started": False}
 
@@ -324,8 +326,6 @@ async def progress_stream(
             try:
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     ydl.download([url])
-                # yt_dlp.download() only returns AFTER ffmpeg merge is complete.
-                # Set done=True here — the file is guaranteed to be on disk.
                 if task_id in task_progress:
                     task_progress[task_id]["progress"] = 100
                     task_progress[task_id]["done"] = True
@@ -367,7 +367,6 @@ async def progress_stream(
                 break
 
             if is_done:
-                # File is fully written to disk — safe to deliver
                 yield f"data: {{\"progress\": 100, \"done\": true, \"task_id\": \"{task_id}\"}}\n\n"
                 break
 
@@ -395,7 +394,6 @@ async def progress_stream(
 
 
 def _json_str(s: str) -> str:
-    """Safely encode a string as a JSON string value."""
     return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
 
 
@@ -406,8 +404,8 @@ async def deliver_file(
     title: str = Query(None),
 ):
     """
-    Deliver the downloaded file. Called by the frontend only after receiving done=true,
-    meaning the file is guaranteed to exist on disk.
+    Deliver the downloaded file. Called by the frontend only after receiving done=true.
+    Content-Disposition headers are strictly latin-1 encoded for Starlette safety.
     """
     safe_task = task_id.replace("-", "")[:16]
     candidates = list(DOWNLOAD_DIR.glob(f"{safe_task}.*"))
@@ -420,8 +418,7 @@ async def deliver_file(
 
     file_path = candidates[0]
     actual_ext = file_path.suffix.lstrip(".")
-    target_filename = _clean_filename(title, actual_ext)
-    quoted_filename = urllib.parse.quote(target_filename)
+    ascii_filename, quoted_utf8 = _clean_filename(title, actual_ext)
 
     def _cleanup():
         try:
@@ -435,9 +432,8 @@ async def deliver_file(
     return FileResponse(
         path=str(file_path),
         media_type="application/octet-stream",
-        filename=target_filename,
         background=background_tasks,
         headers={
-            "Content-Disposition": f"attachment; filename=\"{target_filename}\"; filename*=utf-8''{quoted_filename}",
+            "Content-Disposition": f"attachment; filename=\"{ascii_filename}\"; filename*=utf-8''{quoted_utf8}",
         },
     )

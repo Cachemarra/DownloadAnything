@@ -23,6 +23,7 @@ import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
@@ -30,6 +31,9 @@ from pydantic import BaseModel
 # ---------------------------------------------------------------------------
 DOWNLOAD_DIR = pathlib.Path("/tmp/download_anything")
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+STATIC_DIR = pathlib.Path(__file__).parent / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 # Shared in-memory task registry
 task_progress: dict[str, dict] = {}
@@ -71,6 +75,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 # ---------------------------------------------------------------------------

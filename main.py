@@ -11,7 +11,6 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
-import os
 import pathlib
 import re
 import shutil
@@ -23,7 +22,7 @@ from typing import AsyncIterator
 import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
@@ -39,13 +38,13 @@ task_progress: dict[str, dict] = {}
 NODE_PATH = shutil.which("node")
 JS_RUNTIMES_OPT = {"js_runtimes": {"node": {"path": NODE_PATH}}} if NODE_PATH else {}
 
+
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Clean up stale temp files on startup and shutdown."""
     DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
     for f in DOWNLOAD_DIR.iterdir():
         try:
@@ -73,6 +72,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
@@ -86,7 +86,6 @@ class InfoRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _clean_error_message(raw_msg: str) -> str:
-    """Remove ANSI escape sequences and verbose yt-dlp error prefixes."""
     clean = re.sub(r"\x1b\[[0-9;]*[mGKB]", "", raw_msg)
     clean = re.sub(r"^ERROR:\s*", "", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\[youtube\]\s*", "", clean, flags=re.IGNORECASE)
@@ -94,7 +93,6 @@ def _clean_error_message(raw_msg: str) -> str:
 
 
 def _clean_filename(name: str | None, ext: str) -> str:
-    """Sanitize video title into a clean filename for download headers."""
     if not name:
         return f"download.{ext}"
     clean = re.sub(r'[\\/*?:\x22<>|\r\n\t]', "", name)
@@ -105,29 +103,52 @@ def _clean_filename(name: str | None, ext: str) -> str:
 
 
 def _make_progress_hook(task_id: str):
-    """Return a yt-dlp progress hook that updates task_progress[task_id]."""
+    """
+    Track download progress.
+    IMPORTANT: We do NOT set done=True here because 'finished' fires after each
+    individual stream segment (video, then audio), NOT after the final ffmpeg merge.
+    We only track the rolling percentage so the progress bar stays accurate.
+    done=True is set ONLY after yt_dlp.download() fully returns.
+    """
+    segment_count = [0]
+
     def hook(d: dict) -> None:
         status = d.get("status")
+        state = task_progress.get(task_id)
+        if state is None:
+            return
+
         if status == "downloading":
             downloaded = d.get("downloaded_bytes", 0) or 0
             total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
             if total > 0:
-                pct = int(downloaded / total * 100)
-                if task_id in task_progress:
-                    task_progress[task_id]["progress"] = min(pct, 99)
+                # Scale each segment: if 2 segments (video+audio), each is 50% of total
+                # We report progress across both segments combined
+                raw_pct = int(downloaded / total * 100)
+                # During segment 1 (video): progress is 0-50%
+                # During segment 2 (audio): progress is 50-95%
+                # After merge: 100%
+                if segment_count[0] == 0:
+                    pct = int(raw_pct * 0.50)
+                elif segment_count[0] == 1:
+                    pct = 50 + int(raw_pct * 0.45)
+                else:
+                    pct = 95 + int(raw_pct * 0.04)
+                state["progress"] = min(pct, 99)
+
         elif status == "finished":
-            if task_id in task_progress:
-                task_progress[task_id]["progress"] = 100
-                task_progress[task_id]["done"] = True
-        elif status == "error":
-            if task_id in task_progress:
-                task_progress[task_id]["error"] = "Download error"
-                task_progress[task_id]["done"] = True
+            # A segment finished downloading — bump segment count
+            segment_count[0] += 1
+            # Show 50% after video segment, 95% after audio (before merge)
+            if segment_count[0] == 1:
+                state["progress"] = 50
+            elif segment_count[0] >= 2:
+                state["progress"] = 95
+
     return hook
 
 
 def _ydl_opts_for_quality(quality: str, task_id: str, output_template: str) -> dict:
-    """Build yt-dlp options dict for the requested quality."""
     common = {
         "outtmpl": output_template,
         "progress_hooks": [_make_progress_hook(task_id)],
@@ -167,11 +188,10 @@ def _ydl_opts_for_quality(quality: str, task_id: str, output_template: str) -> d
 
 
 def _estimated_filesize(info: dict, quality: str) -> int:
-    """Return an estimated filesize in bytes for the chosen quality."""
     duration = info.get("duration") or 0
     if quality == "mp3":
         return int(duration * 320 * 1000 / 8)
-    
+
     match = re.match(r"^(\d+)p$", quality)
     if match:
         target_h = int(match.group(1))
@@ -184,26 +204,25 @@ def _estimated_filesize(info: dict, quality: str) -> int:
                     best = f
         if best and best.get("filesize"):
             return best["filesize"]
-        
+
         bitrate_mbps = {2160: 15.0, 1440: 8.0, 1080: 4.5, 720: 2.5, 480: 1.2, 360: 0.7, 240: 0.4, 144: 0.2}
         mbps = bitrate_mbps.get(target_h, 2.0)
         return int(duration * mbps * 1_000_000 / 8)
-    
+
     return 0
 
 
 def _extract_available_formats(info: dict) -> list[dict]:
-    """Extract all available video resolutions and MP3 audio option."""
     formats_list = info.get("formats") or []
-    detected_heights = set()
-    
+    detected_heights: set[int] = set()
+
     for f in formats_list:
         h = f.get("height")
         vcodec = f.get("vcodec", "none")
         if h and isinstance(h, int) and h >= 144 and vcodec != "none":
             detected_heights.add(h)
-    
-    sorted_heights = sorted(list(detected_heights), reverse=True)
+
+    sorted_heights = sorted(detected_heights, reverse=True)
     if not sorted_heights:
         sorted_heights = [1080, 720, 480, 360]
 
@@ -224,7 +243,7 @@ def _extract_available_formats(info: dict) -> list[dict]:
 
         formats.append({
             "id": f"{h}p",
-            "label": f"MP4 Video",
+            "label": "MP4 Video",
             "sublabel": f"{h}p • {quality_tag}",
             "ext": "mp4",
             "filesize": _estimated_filesize(info, f"{h}p"),
@@ -253,7 +272,6 @@ async def serve_index():
 
 @app.post("/api/info")
 async def get_info(body: InfoRequest):
-    """Extract video metadata using yt-dlp without downloading."""
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
@@ -266,27 +284,19 @@ async def get_info(body: InfoRequest):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(body.url, download=False)
     except yt_dlp.utils.DownloadError as exc:
-        clean_msg = _clean_error_message(str(exc))
-        raise HTTPException(status_code=400, detail=clean_msg) from exc
+        raise HTTPException(status_code=400, detail=_clean_error_message(str(exc))) from exc
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not fetch info: {exc}") from exc
 
     if not info:
         raise HTTPException(status_code=400, detail="No information returned for this URL.")
 
-    title = info.get("title") or "Unknown Title"
-    thumbnail = info.get("thumbnail") or ""
-    duration = int(info.get("duration") or 0)
-    author = info.get("uploader") or info.get("channel") or info.get("creator") or "Unknown"
-
-    formats = _extract_available_formats(info)
-
     return {
-        "title": title,
-        "thumbnail": thumbnail,
-        "duration": duration,
-        "author": author,
-        "formats": formats,
+        "title": info.get("title") or "Unknown Title",
+        "thumbnail": info.get("thumbnail") or "",
+        "duration": int(info.get("duration") or 0),
+        "author": info.get("uploader") or info.get("channel") or info.get("creator") or "Unknown",
+        "formats": _extract_available_formats(info),
     }
 
 
@@ -298,15 +308,13 @@ async def progress_stream(
     quality: str = Query(None),
 ):
     """
-    SSE Progress Stream & Background Download Executor.
-    Triggers download if url and quality are provided, and streams {"progress": N, "done": bool}.
+    SSE endpoint. Starts the yt-dlp download in a thread executor, then streams
+    progress events. Sends done=true ONLY after yt_dlp.download() fully returns
+    (i.e., after ffmpeg merge is complete and the final file is on disk).
     """
-    # Initialize task state
-    if task_id not in task_progress:
-        task_progress[task_id] = {"progress": 0, "done": False, "error": None, "started": False}
+    task_progress[task_id] = {"progress": 0, "done": False, "error": None, "started": False}
 
-    # Start download in thread pool if url and quality are passed
-    if url and quality and not task_progress[task_id].get("started"):
+    if url and quality:
         task_progress[task_id]["started"] = True
         safe_task = task_id.replace("-", "")[:16]
         output_template = str(DOWNLOAD_DIR / f"{safe_task}.%(ext)s")
@@ -316,15 +324,20 @@ async def progress_stream(
             try:
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     ydl.download([url])
-            except yt_dlp.utils.DownloadError as exc:
-                clean_err = _clean_error_message(str(exc))
+                # yt_dlp.download() only returns AFTER ffmpeg merge is complete.
+                # Set done=True here — the file is guaranteed to be on disk.
                 if task_id in task_progress:
-                    task_progress[task_id]["error"] = clean_err
+                    task_progress[task_id]["progress"] = 100
+                    task_progress[task_id]["done"] = True
+            except yt_dlp.utils.DownloadError as exc:
+                err = _clean_error_message(str(exc))
+                if task_id in task_progress:
+                    task_progress[task_id]["error"] = err
                     task_progress[task_id]["done"] = True
             except Exception as exc:
-                clean_err = _clean_error_message(str(exc))
+                err = _clean_error_message(str(exc))
                 if task_id in task_progress:
-                    task_progress[task_id]["error"] = clean_err
+                    task_progress[task_id]["error"] = err
                     task_progress[task_id]["done"] = True
 
         asyncio.get_event_loop().run_in_executor(None, _run_bg_download)
@@ -340,9 +353,8 @@ async def progress_stream(
 
             state = task_progress.get(task_id)
             if state is None:
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.3)
                 if time.monotonic() - start > 5:
-                    yield "data: {\"progress\": 0, \"done\": false}\n\n"
                     break
                 continue
 
@@ -351,21 +363,24 @@ async def progress_stream(
             err = state.get("error")
 
             if err:
-                yield f"data: {{\"progress\": 0, \"error\": \"{err}\"}}\n\n"
+                yield f"data: {{\"progress\": 0, \"error\": {_json_str(err)}}}\n\n"
                 break
 
-            if pct != last_pct or is_done:
+            if is_done:
+                # File is fully written to disk — safe to deliver
+                yield f"data: {{\"progress\": 100, \"done\": true, \"task_id\": \"{task_id}\"}}\n\n"
+                break
+
+            if pct != last_pct:
                 last_pct = pct
-                if is_done:
-                    yield f"data: {{\"progress\": 100, \"done\": true, \"task_id\": \"{task_id}\"}}\n\n"
-                    break
-                else:
-                    yield f"data: {{\"progress\": {pct}, \"done\": false}}\n\n"
+                yield f"data: {{\"progress\": {pct}, \"done\": false}}\n\n"
 
             if time.monotonic() - start > timeout:
                 break
 
             await asyncio.sleep(0.3)
+
+        task_progress.pop(task_id, None)
 
     from starlette.responses import StreamingResponse
     return StreamingResponse(
@@ -379,25 +394,32 @@ async def progress_stream(
     )
 
 
+def _json_str(s: str) -> str:
+    """Safely encode a string as a JSON string value."""
+    return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
+
+
 @app.get("/api/file/{task_id}")
 async def deliver_file(
     task_id: str,
     background_tasks: BackgroundTasks,
-    title: str = Query(None, description="Optional video title for download filename"),
+    title: str = Query(None),
 ):
     """
-    Instant file delivery endpoint called AFTER 100% completion.
-    Delivers file instantly and auto-deletes from disk immediately after.
+    Deliver the downloaded file. Called by the frontend only after receiving done=true,
+    meaning the file is guaranteed to exist on disk.
     """
     safe_task = task_id.replace("-", "")[:16]
     candidates = list(DOWNLOAD_DIR.glob(f"{safe_task}.*"))
 
     if not candidates:
-        raise HTTPException(status_code=404, detail="File expired or not found. Please try downloading again.")
+        raise HTTPException(
+            status_code=404,
+            detail="File not found. It may have already been downloaded or expired."
+        )
 
     file_path = candidates[0]
     actual_ext = file_path.suffix.lstrip(".")
-
     target_filename = _clean_filename(title, actual_ext)
     quoted_filename = urllib.parse.quote(target_filename)
 

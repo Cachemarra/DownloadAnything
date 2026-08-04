@@ -461,29 +461,57 @@
         activeEventSource.close();
       }
 
-      activeEventSource = new EventSource(`/api/progress/${taskId}`);
+      const videoTitle = previewTitle.textContent || "download";
+
+      // Connect to SSE stream which triggers the background download and reports progress
+      const sseUrl = `/api/progress/${taskId}?url=${encodeURIComponent(currentVideoUrl)}&quality=${encodeURIComponent(quality)}`;
+      activeEventSource = new EventSource(sseUrl);
 
       activeEventSource.onmessage = function(event) {
         try {
           const payload = JSON.parse(event.data);
+          
+          if (payload.error) {
+            showError(payload.error);
+            progressContainer.classList.add("hidden");
+            if (activeEventSource) {
+              activeEventSource.close();
+              activeEventSource = null;
+            }
+            return;
+          }
+
           if (typeof payload.progress === "number") {
             const pct = Math.min(100, Math.max(0, payload.progress));
             progressBarFill.style.width = `${pct}%`;
             progressPercentage.textContent = `${pct}%`;
 
-            if (pct >= 100) {
-              progressStatusText.textContent = "Complete!";
-              progressStatusIcon.textContent = "check_circle";
-              progressStatusIcon.className = "material-symbols-outlined text-primary";
-              if (activeEventSource) {
-                activeEventSource.close();
-                activeEventSource = null;
-              }
-            } else if (pct > 0) {
+            if (pct > 0 && pct < 100) {
               progressStatusText.textContent = "Downloading...";
-            } else {
-              progressStatusText.textContent = "Preparing...";
             }
+          }
+
+          if (payload.done) {
+            progressStatusText.textContent = "Complete!";
+            progressStatusIcon.textContent = "check_circle";
+            progressStatusIcon.className = "material-symbols-outlined text-primary";
+            
+            if (activeEventSource) {
+              activeEventSource.close();
+              activeEventSource = null;
+            }
+
+            // Instantly deliver the file download on completion
+            const fileDeliveryUrl = `/api/file/${taskId}?title=${encodeURIComponent(videoTitle)}`;
+            
+            let iframe = document.getElementById("hidden-download-iframe");
+            if (!iframe) {
+              iframe = document.createElement("iframe");
+              iframe.id = "hidden-download-iframe";
+              iframe.style.display = "none";
+              document.body.appendChild(iframe);
+            }
+            iframe.src = fileDeliveryUrl;
           }
         } catch (e) {
           console.error("SSE parse error", e);
@@ -496,19 +524,6 @@
           activeEventSource = null;
         }
       };
-
-      const videoTitle = previewTitle.textContent || "download";
-      const downloadUrl = `/api/download?url=${encodeURIComponent(currentVideoUrl)}&quality=${encodeURIComponent(quality)}&task_id=${encodeURIComponent(taskId)}&title=${encodeURIComponent(videoTitle)}`;
-      
-      // Use an invisible iframe so single-click automatically triggers the browser file download
-      let iframe = document.getElementById("hidden-download-iframe");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "hidden-download-iframe";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      iframe.src = downloadUrl;
     }
   </script>
 </body>

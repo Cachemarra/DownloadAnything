@@ -2,10 +2,10 @@
 Download Anything – FastAPI Backend
 ====================================
 Endpoints:
-  POST /api/info                  – fetch video metadata via yt-dlp
-  GET  /api/progress/{task_id}    – Server-Sent Events: streams only {"progress": int}
-  GET  /api/download              – download & stream file, auto-delete after delivery
-  GET  /                          – serve index.html
+  POST /api/info                      – fetch video metadata via yt-dlp
+  GET  /api/progress/{task_id}        – SSE progress stream & background download trigger
+  GET  /api/file/{task_id}            – instant file delivery after 100% completion
+  GET  /                              – serve index.html
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ import re
 import shutil
 import time
 import urllib.parse
-import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -114,13 +113,16 @@ def _make_progress_hook(task_id: str):
             total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
             if total > 0:
                 pct = int(downloaded / total * 100)
-                task_progress[task_id]["progress"] = min(pct, 99)
+                if task_id in task_progress:
+                    task_progress[task_id]["progress"] = min(pct, 99)
         elif status == "finished":
-            task_progress[task_id]["progress"] = 100
-            task_progress[task_id]["done"] = True
+            if task_id in task_progress:
+                task_progress[task_id]["progress"] = 100
+                task_progress[task_id]["done"] = True
         elif status == "error":
-            task_progress[task_id]["error"] = "Download error"
-            task_progress[task_id]["done"] = True
+            if task_id in task_progress:
+                task_progress[task_id]["error"] = "Download error"
+                task_progress[task_id]["done"] = True
     return hook
 
 
@@ -289,11 +291,44 @@ async def get_info(body: InfoRequest):
 
 
 @app.get("/api/progress/{task_id}")
-async def progress_stream(task_id: str, request: Request):
+async def progress_stream(
+    task_id: str,
+    request: Request,
+    url: str = Query(None),
+    quality: str = Query(None),
+):
     """
-    Server-Sent Events endpoint.
-    Streams ONLY: data: {"progress": <int 0-100>}
+    SSE Progress Stream & Background Download Executor.
+    Triggers download if url and quality are provided, and streams {"progress": N, "done": bool}.
     """
+    # Initialize task state
+    if task_id not in task_progress:
+        task_progress[task_id] = {"progress": 0, "done": False, "error": None, "started": False}
+
+    # Start download in thread pool if url and quality are passed
+    if url and quality and not task_progress[task_id].get("started"):
+        task_progress[task_id]["started"] = True
+        safe_task = task_id.replace("-", "")[:16]
+        output_template = str(DOWNLOAD_DIR / f"{safe_task}.%(ext)s")
+        opts = _ydl_opts_for_quality(quality, task_id, output_template)
+
+        def _run_bg_download():
+            try:
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    ydl.download([url])
+            except yt_dlp.utils.DownloadError as exc:
+                clean_err = _clean_error_message(str(exc))
+                if task_id in task_progress:
+                    task_progress[task_id]["error"] = clean_err
+                    task_progress[task_id]["done"] = True
+            except Exception as exc:
+                clean_err = _clean_error_message(str(exc))
+                if task_id in task_progress:
+                    task_progress[task_id]["error"] = clean_err
+                    task_progress[task_id]["done"] = True
+
+        asyncio.get_event_loop().run_in_executor(None, _run_bg_download)
+
     async def event_generator():
         last_pct = -1
         timeout = 600
@@ -307,27 +342,30 @@ async def progress_stream(task_id: str, request: Request):
             if state is None:
                 await asyncio.sleep(0.2)
                 if time.monotonic() - start > 5:
-                    yield "data: {\"progress\": 0}\n\n"
+                    yield "data: {\"progress\": 0, \"done\": false}\n\n"
                     break
                 continue
 
             pct = state.get("progress", 0)
-            if pct != last_pct:
-                yield f"data: {{\"progress\": {pct}}}\n\n"
-                last_pct = pct
+            is_done = state.get("done", False)
+            err = state.get("error")
 
-            if state.get("done") or state.get("error"):
-                if not state.get("error"):
-                    if last_pct < 100:
-                        yield "data: {\"progress\": 100}\n\n"
+            if err:
+                yield f"data: {{\"progress\": 0, \"error\": \"{err}\"}}\n\n"
                 break
+
+            if pct != last_pct or is_done:
+                last_pct = pct
+                if is_done:
+                    yield f"data: {{\"progress\": 100, \"done\": true, \"task_id\": \"{task_id}\"}}\n\n"
+                    break
+                else:
+                    yield f"data: {{\"progress\": {pct}, \"done\": false}}\n\n"
 
             if time.monotonic() - start > timeout:
                 break
 
             await asyncio.sleep(0.3)
-
-        task_progress.pop(task_id, None)
 
     from starlette.responses import StreamingResponse
     return StreamingResponse(
@@ -341,50 +379,21 @@ async def progress_stream(task_id: str, request: Request):
     )
 
 
-@app.get("/api/download")
-async def download_file(
+@app.get("/api/file/{task_id}")
+async def deliver_file(
+    task_id: str,
     background_tasks: BackgroundTasks,
-    url: str = Query(..., description="Video URL to download"),
-    quality: str = Query(..., description="Quality specifier, e.g. 1080p, 720p, 480p, mp3"),
-    task_id: str = Query(..., description="Task ID for progress tracking"),
     title: str = Query(None, description="Optional video title for download filename"),
 ):
-    """Download media file and stream it to client. Auto-deletes after delivery."""
-
-    task_progress[task_id] = {"progress": 0, "done": False, "error": None}
-
-    ext = "mp3" if quality == "mp3" else "mp4"
+    """
+    Instant file delivery endpoint called AFTER 100% completion.
+    Delivers file instantly and auto-deletes from disk immediately after.
+    """
     safe_task = task_id.replace("-", "")[:16]
-    output_template = str(DOWNLOAD_DIR / f"{safe_task}.%(ext)s")
-
-    opts = _ydl_opts_for_quality(quality, task_id, output_template)
-
-    loop = asyncio.get_event_loop()
-    download_error: list[str] = []
-
-    def _run_download():
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([url])
-        except yt_dlp.utils.DownloadError as exc:
-            clean_err = _clean_error_message(str(exc))
-            download_error.append(clean_err)
-            task_progress[task_id]["error"] = clean_err
-            task_progress[task_id]["done"] = True
-        except Exception as exc:
-            clean_err = _clean_error_message(str(exc))
-            download_error.append(clean_err)
-            task_progress[task_id]["error"] = clean_err
-            task_progress[task_id]["done"] = True
-
-    await loop.run_in_executor(None, _run_download)
-
-    if download_error:
-        raise HTTPException(status_code=400, detail=download_error[0])
-
     candidates = list(DOWNLOAD_DIR.glob(f"{safe_task}.*"))
+
     if not candidates:
-        raise HTTPException(status_code=500, detail="Download completed but output file was not found.")
+        raise HTTPException(status_code=404, detail="File expired or not found. Please try downloading again.")
 
     file_path = candidates[0]
     actual_ext = file_path.suffix.lstrip(".")

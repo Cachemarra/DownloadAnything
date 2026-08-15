@@ -269,6 +269,35 @@ def _extract_available_formats(info: dict) -> list[dict]:
     return formats
 
 
+def _extract_preview_info(info: dict, url: str) -> dict:
+    extractor = (info.get("extractor") or "").lower()
+    video_id = info.get("id") or ""
+    is_youtube = "youtube" in extractor or "youtube.com" in url or "youtu.be" in url
+    embed_url = None
+    if is_youtube and video_id:
+        embed_url = f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1&rel=0"
+    elif info.get("embed_url"):
+        embed_url = info.get("embed_url")
+
+    preview_url = None
+    formats = info.get("formats") or []
+    best_combined = None
+    for f in formats:
+        if f.get("vcodec") != "none" and f.get("acodec") != "none" and f.get("url"):
+            if best_combined is None or (f.get("height") or 0) > (best_combined.get("height") or 0):
+                best_combined = f
+    if best_combined:
+        preview_url = best_combined.get("url")
+    elif info.get("url"):
+        preview_url = info.get("url")
+
+    return {
+        "preview_url": preview_url,
+        "embed_url": embed_url,
+        "is_youtube": is_youtube,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -289,6 +318,17 @@ async def serve_privacy_policy():
 async def serve_about():
     html_path = pathlib.Path(__file__).parent / "templates" / "about.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    icon_path = STATIC_DIR / "logo_icon.png"
+    return FileResponse(icon_path, media_type="image/png")
+
+
+@app.post("/api/heartbeat")
+async def heartbeat():
+    return {"status": "alive"}
 
 
 @app.post("/api/info")
@@ -312,12 +352,17 @@ async def get_info(body: InfoRequest):
     if not info:
         raise HTTPException(status_code=400, detail="No information returned for this URL.")
 
+    preview_data = _extract_preview_info(info, body.url)
+
     return {
         "title": info.get("title") or "Unknown Title",
         "thumbnail": info.get("thumbnail") or "",
         "duration": int(info.get("duration") or 0),
         "author": info.get("uploader") or info.get("channel") or info.get("creator") or "Unknown",
         "formats": _extract_available_formats(info),
+        "preview_url": preview_data["preview_url"],
+        "embed_url": preview_data["embed_url"],
+        "is_youtube": preview_data["is_youtube"],
     }
 
 

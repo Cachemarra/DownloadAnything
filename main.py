@@ -297,6 +297,11 @@ async def favicon():
     return FileResponse(icon_path, media_type="image/png")
 
 
+@app.post("/api/heartbeat")
+async def heartbeat():
+    return {"status": "alive"}
+
+
 @app.post("/api/info")
 async def get_info(body: InfoRequest):
     ydl_opts = {

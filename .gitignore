@@ -1,5 +1,15 @@
+# Virtualenv & Python cache
 venv/
 __pycache__/
 *.pyc
-.pytest_cache/
 .DS_Store
+
+# Build outputs & binaries
+build/
+dist/
+bin/
+
+# Test files & cache
+.pytest_cache/
+tests/
+pytest.ini

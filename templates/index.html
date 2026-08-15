@@ -414,8 +414,10 @@
     .divider { width:100%; height:1px; background-color:var(--color-surface-high); margin:8px 0; }
     .thumb-overlay { background-color:rgba(0,0,0,0.08); }
     .dark .thumb-overlay { background-color:rgba(0,0,0,0.2); }
-    .play-btn { background-color:rgba(253,247,255,0.9); backdrop-filter:blur(8px); box-shadow:var(--shadow-card); }
+    .play-btn { background-color:rgba(253,247,255,0.9); backdrop-filter:blur(8px); box-shadow:var(--shadow-card); cursor:pointer; transition:transform 0.2s ease, background-color 0.2s ease, color 0.2s ease; }
     .dark .play-btn { background-color:rgba(26,24,36,0.88); }
+    .play-btn:hover { transform:translate(-50%,-50%) scale(1.12); background-color:var(--color-primary); }
+    .play-btn:hover .material-symbols-outlined { color:var(--color-on-primary) !important; }
     .duration-chip { background-color:rgba(0,0,0,0.65); backdrop-filter:blur(8px); color:#ffffff; }
 
     /* =======================================================================
@@ -570,13 +572,14 @@
         <!-- Preview Section -->
         <div id="preview-section" class="hidden" style="display:flex;flex-direction:column;gap:20px;">
 
-          <div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background-color:var(--color-surface-high);border:1px solid color-mix(in srgb,var(--color-outline-var) 30%,transparent);">
+          <div id="preview-media-container" style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background-color:var(--color-surface-high);border:1px solid color-mix(in srgb,var(--color-outline-var) 30%,transparent);">
             <img id="preview-thumb" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.92;transition:opacity 0.3s ease;" src="" alt="Video thumbnail"/>
-            <div class="thumb-overlay" style="position:absolute;inset:0;"></div>
-            <button class="play-btn" style="position:absolute;z-index:10;width:56px;height:56px;border-radius:9999px;border:none;cursor:default;display:flex;align-items:center;justify-content:center;top:50%;left:50%;transform:translate(-50%,-50%);">
+            <div id="preview-thumb-overlay" class="thumb-overlay" style="position:absolute;inset:0;"></div>
+            <button id="preview-play-btn" class="play-btn" title="Play preview" aria-label="Play video preview" onclick="startPreviewPlayer()" style="position:absolute;z-index:10;width:56px;height:56px;border-radius:9999px;border:none;display:flex;align-items:center;justify-content:center;top:50%;left:50%;transform:translate(-50%,-50%);">
               <span class="material-symbols-outlined" style="font-size:28px;font-variation-settings:'FILL' 1;color:var(--color-on-surface);">play_arrow</span>
             </button>
-            <div id="preview-duration" class="duration-chip" style="position:absolute;bottom:12px;right:12px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.04em;padding:4px 10px;border-radius:9999px;">--:--</div>
+            <div id="preview-duration" class="duration-chip" style="position:absolute;bottom:12px;right:12px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.04em;padding:4px 10px;border-radius:9999px;z-index:11;">--:--</div>
+            <div id="player-frame-wrapper" class="hidden" style="position:absolute;inset:0;z-index:20;background:#000000;display:flex;align-items:center;justify-content:center;"></div>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:4px;">
@@ -773,6 +776,9 @@
        Download App Logic
     ------------------------------------------------------------------ */
     let currentVideoUrl = "";
+    let currentPreviewUrl = "";
+    let currentEmbedUrl = "";
+    let currentIsYoutube = false;
     let activeEventSource = null;
 
     const urlInput   = document.getElementById("url-input");
@@ -792,6 +798,41 @@
     const progressPercentage = document.getElementById("progress-percentage");
     const progressStatusText = document.getElementById("progress-status-text");
     const progressStatusIcon = document.getElementById("progress-status-icon");
+
+    function resetPreviewPlayer() {
+      const wrapper = document.getElementById("player-frame-wrapper");
+      if (wrapper) {
+        wrapper.innerHTML = "";
+        wrapper.classList.add("hidden");
+      }
+      const playBtn = document.getElementById("preview-play-btn");
+      if (playBtn) playBtn.classList.remove("hidden");
+      const overlay = document.getElementById("preview-thumb-overlay");
+      if (overlay) overlay.classList.remove("hidden");
+      const duration = document.getElementById("preview-duration");
+      if (duration) duration.classList.remove("hidden");
+    }
+
+    function startPreviewPlayer() {
+      const wrapper = document.getElementById("player-frame-wrapper");
+      if (!wrapper) return;
+
+      if (currentEmbedUrl) {
+        wrapper.innerHTML = `<iframe src="${escHtml(currentEmbedUrl)}" style="width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        wrapper.classList.remove("hidden");
+        document.getElementById("preview-play-btn")?.classList.add("hidden");
+        document.getElementById("preview-thumb-overlay")?.classList.add("hidden");
+        document.getElementById("preview-duration")?.classList.add("hidden");
+      } else if (currentPreviewUrl) {
+        wrapper.innerHTML = `<video src="${escHtml(currentPreviewUrl)}" controls autoplay style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+        wrapper.classList.remove("hidden");
+        document.getElementById("preview-play-btn")?.classList.add("hidden");
+        document.getElementById("preview-thumb-overlay")?.classList.add("hidden");
+        document.getElementById("preview-duration")?.classList.add("hidden");
+      } else {
+        showError("Video preview playback is unavailable for this link.");
+      }
+    }
 
     function formatDuration(seconds) {
       if (!seconds || seconds <= 0) return "0:00";
@@ -868,6 +909,10 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Failed to fetch video information.");
         currentVideoUrl = url;
+        currentPreviewUrl = data.preview_url || "";
+        currentEmbedUrl = data.embed_url || "";
+        currentIsYoutube = !!data.is_youtube;
+        resetPreviewPlayer();
         previewThumb.src = data.thumbnail || "";
         previewTitle.textContent = data.title || "Video Title";
         let estSizeStr = "";

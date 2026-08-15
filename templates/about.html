@@ -4,7 +4,12 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>About – Download Anything</title>
-  <meta name="description" content="About Download Anything — a free, private, open-source video and audio downloader. No sign-up, no tracking."/>
+  <meta name="description" content="About Download Anything — a private, local desktop application for downloading video and audio. Zero central servers, 100% local processing."/>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/logo_icon.png"/>
+  <link rel="shortcut icon" type="image/png" href="/static/logo_icon.png"/>
+  <link rel="apple-touch-icon" href="/static/logo_icon.png"/>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -68,6 +73,29 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       transition: background-color 0.25s ease, color 0.25s ease;
+      position: relative;
+    }
+
+    /* Paper Texture Background Overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url("/static/paper_texture.png");
+      background-repeat: repeat;
+      background-size: 320px 320px;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.16;
+      mix-blend-mode: multiply;
+    }
+
+    .dark body::before,
+    html.dark body::before {
+      opacity: 0.10;
+      mix-blend-mode: overlay;
     }
 
     /* Header */
@@ -130,7 +158,7 @@
     }
     .page-tagline {
       font-size: 18px; line-height: 1.6; color: var(--color-on-surface-var);
-      max-width: 560px; margin-bottom: 48px;
+      max-width: 620px; margin-bottom: 48px;
     }
 
     /* Feature pills */
@@ -244,13 +272,13 @@
 
       <p class="page-eyebrow">About the project</p>
       <h1 class="page-title">Download Anything</h1>
-      <p class="page-tagline">A free, open, and private tool to save video and audio from anywhere on the web — no sign-up, no tracking, no nonsense.</p>
+      <p class="page-tagline">A private, local desktop application to save video and audio directly on your device — zero central servers, zero tracking, 100% user-directed.</p>
 
       <!-- Feature pills -->
       <div class="pill-row">
-        <span class="pill"><span class="material-symbols-outlined">lock</span>Zero tracking</span>
-        <span class="pill"><span class="material-symbols-outlined">bolt</span>Instant downloads</span>
-        <span class="pill"><span class="material-symbols-outlined">public</span>Works worldwide</span>
+        <span class="pill"><span class="material-symbols-outlined">desktop_windows</span>Local Desktop App</span>
+        <span class="pill"><span class="material-symbols-outlined">dns_off</span>No Central Servers</span>
+        <span class="pill"><span class="material-symbols-outlined">shield</span>100% Local Privacy</span>
         <span class="pill"><span class="material-symbols-outlined">audio_file</span>MP3 &amp; MP4</span>
         <span class="pill"><span class="material-symbols-outlined">hd</span>Up to 4K Ultra HD</span>
       </div>
@@ -259,31 +287,31 @@
       <div class="cards-grid">
         <div class="info-card">
           <div class="card-icon-bg icon-primary">
-            <span class="material-symbols-outlined">download</span>
+            <span class="material-symbols-outlined">desktop_windows</span>
           </div>
-          <h3 class="card-title">What it does</h3>
-          <p class="card-body">Paste a video link, fetch metadata, choose your preferred quality (MP4 from 144p to 4K, or 320kbps MP3 audio), and download directly to your device.</p>
+          <h3 class="card-title">Local Desktop Architecture</h3>
+          <p class="card-body">Download Anything is a local software application running directly on your computer. We do not host or operate central backend servers. All network requests connect directly from your machine to the source media provider.</p>
         </div>
         <div class="info-card">
           <div class="card-icon-bg icon-secondary">
             <span class="material-symbols-outlined">shield</span>
           </div>
-          <h3 class="card-title">Privacy first</h3>
-          <p class="card-body">We never store your downloads or log your activity. Files are processed in memory and deleted immediately after delivery. No cookies, no analytics.</p>
+          <h3 class="card-title">Complete Local Privacy</h3>
+          <p class="card-body">We collect zero personal data, logs, or search histories. Media streams are fetched and processed locally on your machine via open-source engines (`yt-dlp` and `ffmpeg`) and saved directly to your local drive.</p>
         </div>
         <div class="info-card">
           <div class="card-icon-bg icon-tertiary">
-            <span class="material-symbols-outlined">open_source</span>
+            <span class="material-symbols-outlined">code</span>
           </div>
-          <h3 class="card-title">Open source</h3>
-          <p class="card-body">Built on open-source technology. The downloader engine (yt-dlp) supports thousands of sites and is actively maintained by the community.</p>
+          <h3 class="card-title">Open Engine</h3>
+          <p class="card-body">Powered by industry-standard open-source tools (`yt-dlp` and `FastAPI`). The software gives you transparent, direct control over media formats, audio extraction (MP3 up to 320kbps), and video resolutions (144p to 4K).</p>
         </div>
         <div class="info-card">
           <div class="card-icon-bg icon-primary">
-            <span class="material-symbols-outlined">balance</span>
+            <span class="material-symbols-outlined">gavel</span>
           </div>
-          <h3 class="card-title">Responsible use</h3>
-          <p class="card-body">This tool is intended for content you have the right to download — your own uploads, Creative Commons material, or public domain media. Please respect copyright.</p>
+          <h3 class="card-title">User Responsibility</h3>
+          <p class="card-body">Because this application runs locally under your control, any content downloaded is the sole legal responsibility of the user. Please ensure compliance with applicable copyright laws and platform terms.</p>
         </div>
       </div>
 
@@ -292,37 +320,37 @@
       <div class="tech-row">
         <div class="tech-item">
           <div>
-            <div class="tech-name">FastAPI</div>
-            <div class="tech-desc">Async Python web framework for the backend API</div>
+            <div class="tech-name">FastAPI + Uvicorn</div>
+            <div class="tech-desc">Local async Python backend runtime running on your machine</div>
           </div>
-          <span class="tech-badge">Backend</span>
+          <span class="tech-badge">Local Runtime</span>
         </div>
         <div class="tech-item">
           <div>
             <div class="tech-name">yt-dlp</div>
-            <div class="tech-desc">Open-source video downloader engine</div>
+            <div class="tech-desc">Open-source engine for direct client-to-source media extraction</div>
           </div>
           <span class="tech-badge">Engine</span>
         </div>
         <div class="tech-item">
           <div>
-            <div class="tech-name">Vellum Minimalist</div>
-            <div class="tech-desc">Custom design system — light &amp; dark adaptive</div>
+            <div class="tech-name">FFmpeg</div>
+            <div class="tech-desc">Local multimedia processing for high-bitrate MP3 audio conversion</div>
           </div>
-          <span class="tech-badge">Design</span>
+          <span class="tech-badge">Media Core</span>
         </div>
         <div class="tech-item">
           <div>
-            <div class="tech-name">Newsreader + Hanken Grotesk</div>
-            <div class="tech-desc">Typography — serif headlines, grotesque body</div>
+            <div class="tech-name">Vellum Minimalist System</div>
+            <div class="tech-desc">Custom light/dark adaptive interface with Google Newsreader typography</div>
           </div>
-          <span class="tech-badge">Fonts</span>
+          <span class="tech-badge">Interface</span>
         </div>
       </div>
 
       <!-- Version -->
       <p style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--color-outline); text-align:center;">
-        Version 1.0.0 &nbsp;·&nbsp; © 2026 Download Anything
+        Version 1.0.0 &nbsp;·&nbsp; Desktop Edition &nbsp;·&nbsp; © 2026 Download Anything
       </p>
     </div>
   </main>

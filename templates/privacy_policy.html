@@ -4,7 +4,12 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Privacy Policy – Download Anything</title>
-  <meta name="description" content="Privacy Policy for Download Anything. We collect no personal data. Your downloads stay on your device."/>
+  <meta name="description" content="Privacy Policy for Download Anything local desktop app. We operate no servers and collect no data. All processing occurs locally on your device."/>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/logo_icon.png"/>
+  <link rel="shortcut icon" type="image/png" href="/static/logo_icon.png"/>
+  <link rel="apple-touch-icon" href="/static/logo_icon.png"/>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -56,6 +61,29 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       transition: background-color 0.25s ease, color 0.25s ease;
+      position: relative;
+    }
+
+    /* Paper Texture Background Overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url("/static/paper_texture.png");
+      background-repeat: repeat;
+      background-size: 320px 320px;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.16;
+      mix-blend-mode: multiply;
+    }
+
+    .dark body::before,
+    html.dark body::before {
+      opacity: 0.10;
+      mix-blend-mode: overlay;
     }
 
     /* Header */
@@ -255,61 +283,62 @@
         Back to home
       </a>
 
-      <p class="page-eyebrow">Legal</p>
-      <h1 class="page-title">Privacy Policy</h1>
+      <p class="page-eyebrow">Legal &amp; Local Usage</p>
+      <h1 class="page-title">Privacy Policy &amp; Terms</h1>
       <p class="page-date">Last updated: August 2026</p>
 
       <div class="prose-card">
 
         <div class="highlight-box">
-          <p>TL;DR — We collect zero personal data. Your downloads stay on your device. We don't track you.</p>
+          <p>TL;DR — Download Anything runs 100% locally on your computer. We operate no remote servers and collect no personal data. All downloads occur directly between your device and the media source under your sole responsibility.</p>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">Overview</h2>
-          <p>Download Anything ("the App", "we", "us") is a free, open tool for downloading publicly available video and audio content. Privacy is a core value for us, not an afterthought.</p>
-          <p>This policy describes what little data is involved in running the service and how we handle it.</p>
+          <h2 class="section-title">Standalone Desktop Software</h2>
+          <p>Download Anything ("the Application", "the Software") is designed and distributed strictly as a <strong>local desktop application</strong>. We (the developers) do not host, serve, or operate any central servers, remote proxies, or media streaming services.</p>
+          <p>The Application runs entirely on your own local environment. Any media requests, link processing, and downloads are executed directly from your local hardware and internet connection.</p>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">What we collect</h2>
-          <p>We collect <strong>nothing</strong> personally identifiable. Specifically:</p>
+          <h2 class="section-title">Zero Data Collection</h2>
+          <p>Because there are no central servers operated by us, we collect <strong>zero user data</strong>. Specifically:</p>
           <ul>
-            <li>We do not use cookies (other than your locally-stored theme preference).</li>
-            <li>We do not create accounts or require any login.</li>
-            <li>We do not log IP addresses beyond what is standard in a web server access log (and these are not retained or shared).</li>
-            <li>We do not use analytics trackers, advertising pixels, or fingerprinting scripts.</li>
+            <li>We do not collect, store, or track your IP address, download history, or entered URLs.</li>
+            <li>We do not require accounts, sign-ups, or user credentials.</li>
+            <li>We do not use telemetry scripts, analytics trackers, or advertising pixels.</li>
+            <li>No cookies are used beyond a local browser preference setting (e.g. dark/light theme).</li>
           </ul>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">Your downloads</h2>
-          <p>When you submit a URL, the app uses <strong>yt-dlp</strong> to fetch publicly available media from the source platform on your behalf. The downloaded file is temporarily stored on the server in memory, delivered to your browser, and then <em>immediately deleted</em>. We never retain copies of downloaded files.</p>
-        </div>
-
-        <div class="prose-section">
-          <h2 class="section-title">Third-party services</h2>
-          <p>The App loads the following third-party resources:</p>
+          <h2 class="section-title">Local Processing &amp; Storage</h2>
+          <p>When you input a URL to fetch metadata or download media, all processing is powered locally on your machine via <strong>yt-dlp</strong> and <strong>ffmpeg</strong>:</p>
           <ul>
-            <li><strong>Google Fonts</strong> – font files served from Google's CDN. Google may log your IP per their own privacy policy.</li>
-            <li><strong>yt-dlp</strong> – an open-source library that communicates with the source video platform (e.g. YouTube) to retrieve media. Their terms of service and privacy policies apply to those requests.</li>
+            <li>Media files are downloaded directly to your local system's temporary directory during extraction.</li>
+            <li>Once transferred to your chosen destination folder, temporary files are immediately cleaned up locally.</li>
+            <li>No files or metadata ever pass through or get stored on any remote server owned by us.</li>
           </ul>
-          <p>We have no affiliation with any video platform and are not responsible for their content or policies.</p>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">Local storage</h2>
-          <p>The App uses <code>localStorage</code> in your browser to remember your dark/light mode preference. This data never leaves your device.</p>
+          <h2 class="section-title">Third-Party Network Connections</h2>
+          <p>When executing a download, the Application sends direct network requests from your computer to the target platform hosting the media (such as YouTube, Vimeo, or other media hosts). Those third-party platforms receive requests directly from your IP address and process them under their own respective Privacy Policies and Terms of Service.</p>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">Children's privacy</h2>
-          <p>The App is not directed to children under 13 and we do not knowingly collect any information from them.</p>
+          <h2 class="section-title">User Responsibility &amp; Copyright Compliance</h2>
+          <p>Because Download Anything operates strictly as a local software client directed by the user:</p>
+          <ul>
+            <li><strong>Sole User Responsibility:</strong> You, the individual user, are entirely responsible for the content you choose to access, stream, download, or store using this Software.</li>
+            <li><strong>Legal &amp; Term Compliance:</strong> You must ensure that your usage complies with all applicable copyright laws, local regulations, and the Terms of Service of third-party platforms.</li>
+            <li><strong>Intended Usage:</strong> The Software is provided for personal archiving, fair use, public domain content, Creative Commons media, and content you have explicit rights to download.</li>
+            <li><strong>Disclaimer of Liability:</strong> The developers provide this Software "as-is" without warranty of any kind, and assume no liability for misuse or copyright infringement committed by users.</li>
+          </ul>
         </div>
 
         <div class="prose-section">
-          <h2 class="section-title">Changes to this policy</h2>
-          <p>If we make meaningful changes to this policy, the "Last updated" date at the top will be revised. As we collect no personal data, changes are unlikely to affect your privacy in practice.</p>
+          <h2 class="section-title">Changes to This Policy</h2>
+          <p>Should the Software be updated, this document will reflect the local operational model. Because we collect no personal data, your privacy remains inherently protected by design on your own local device.</p>
         </div>
 
       </div>

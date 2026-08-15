@@ -291,6 +291,12 @@ async def serve_about():
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@app.get("/favicon.ico")
+async def favicon():
+    icon_path = STATIC_DIR / "logo_icon.png"
+    return FileResponse(icon_path, media_type="image/png")
+
+
 @app.post("/api/info")
 async def get_info(body: InfoRequest):
     ydl_opts = {

@@ -9,6 +9,16 @@ Hey there! Welcome to **DownloadAnything** — a simple, clean, and fast web app
 
 ---
 
+## 🎨 User Interface & Usage
+
+### 🏠 Main Interface
+![DownloadAnything Main UI](./docs/images/ui_homepage.png)
+
+### 📥 Media Extraction & Format Options
+![DownloadAnything Format Selection](./docs/images/ui_fetched_formats.png)
+
+---
+
 ## ✨ Features
 
 - ⚡ **Fast & Responsive UI**: Clean interface built for speed and ease of use.

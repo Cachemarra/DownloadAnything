@@ -437,6 +437,9 @@ async def progress_stream(
                 last_pct = pct
                 yield f"data: {{\"progress\": {pct}, \"done\": false}}\n\n"
 
+            if not state.get("started"):
+                break
+
             if time.monotonic() - start > timeout:
                 break
 

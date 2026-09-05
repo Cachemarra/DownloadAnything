@@ -1,5 +1,6 @@
 # Virtualenv & Python cache
 venv/
+.venv/
 __pycache__/
 *.pyc
 .DS_Store

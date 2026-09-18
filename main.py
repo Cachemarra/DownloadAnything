@@ -11,9 +11,12 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
+import os
 import pathlib
 import re
 import shutil
+import sys
+import tempfile
 import time
 import urllib.parse
 from contextlib import asynccontextmanager
@@ -27,13 +30,19 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Configuration & Paths
 # ---------------------------------------------------------------------------
-DOWNLOAD_DIR = pathlib.Path("/tmp/download_anything")
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    BASE_DIR = pathlib.Path(sys._MEIPASS)
+else:
+    BASE_DIR = pathlib.Path(__file__).parent.resolve()
+
+DOWNLOAD_DIR = pathlib.Path(tempfile.gettempdir()) / "download_anything"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-STATIC_DIR = pathlib.Path(__file__).parent / "static"
+STATIC_DIR = BASE_DIR / "static"
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Shared in-memory task registry
 task_progress: dict[str, dict] = {}
@@ -41,6 +50,29 @@ task_progress: dict[str, dict] = {}
 # Node.js runtime configuration for yt-dlp JS challenges
 NODE_PATH = shutil.which("node")
 JS_RUNTIMES_OPT = {"js_runtimes": {"node": {"path": NODE_PATH}}} if NODE_PATH else {}
+
+# FFmpeg discovery and configuration
+def _find_ffmpeg() -> str | None:
+    exe_name = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
+    bundled_bin = BASE_DIR / "bin" / exe_name
+    if bundled_bin.is_file() and os.access(bundled_bin, os.X_OK):
+        return str(bundled_bin.parent)
+
+    local_bin = pathlib.Path(__file__).parent.resolve() / "bin" / exe_name
+    if local_bin.is_file() and os.access(local_bin, os.X_OK):
+        return str(local_bin.parent)
+
+    sys_ffmpeg = shutil.which("ffmpeg")
+    if sys_ffmpeg:
+        return str(pathlib.Path(sys_ffmpeg).parent)
+
+    return None
+
+FFMPEG_DIR = _find_ffmpeg()
+if FFMPEG_DIR and FFMPEG_DIR not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = FFMPEG_DIR + os.pathsep + os.environ.get("PATH", "")
+
+FFMPEG_OPT = {"ffmpeg_location": FFMPEG_DIR} if FFMPEG_DIR else {}
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +197,7 @@ def _ydl_opts_for_quality(quality: str, task_id: str, output_template: str) -> d
         "no_warnings": True,
         "noplaylist": True,
         **JS_RUNTIMES_OPT,
+        **FFMPEG_OPT,
     }
 
     if quality == "mp3":
@@ -304,19 +337,19 @@ def _extract_preview_info(info: dict, url: str) -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
-    html_path = pathlib.Path(__file__).parent / "templates" / "index.html"
+    html_path = TEMPLATES_DIR / "index.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def serve_privacy_policy():
-    html_path = pathlib.Path(__file__).parent / "templates" / "privacy_policy.html"
+    html_path = TEMPLATES_DIR / "privacy_policy.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/about", response_class=HTMLResponse)
 async def serve_about():
-    html_path = pathlib.Path(__file__).parent / "templates" / "about.html"
+    html_path = TEMPLATES_DIR / "about.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
@@ -340,6 +373,7 @@ async def get_info(body: InfoRequest):
         "noplaylist": True,
         "skip_download": True,
         **JS_RUNTIMES_OPT,
+        **FFMPEG_OPT,
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -503,3 +537,65 @@ async def deliver_file(
             "Content-Disposition": f"attachment; filename=\"{ascii_filename}\"; filename*=utf-8''{quoted_utf8}",
         },
     )
+
+
+__version__ = "1.0.0"
+
+
+def main():
+    import argparse
+    import multiprocessing
+    import socket
+    import threading
+    import webbrowser
+    import uvicorn
+
+    multiprocessing.freeze_support()
+
+    parser = argparse.ArgumentParser(description=f"Download Anything v{__version__} — Fast Media Downloader")
+    parser.add_argument("--host", default="127.0.0.1", help="Host address to bind (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000)")
+    parser.add_argument("--no-browser", action="store_true", help="Do not automatically open web browser")
+    args = parser.parse_args()
+
+    port = args.port
+
+    def is_port_available(h: str, p: int) -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            return s.connect_ex((h, p)) != 0
+
+    if not is_port_available(args.host, port):
+        for candidate in range(8001, 8050):
+            if is_port_available(args.host, candidate):
+                port = candidate
+                break
+
+    url = f"http://{args.host}:{port}"
+    print("=" * 65)
+    print(f"  🎬 Download Anything v{__version__}")
+    print("=" * 65)
+    print(f"  Running locally at: {url}")
+    if FFMPEG_DIR:
+        print(f"  FFmpeg engine     : {FFMPEG_DIR}")
+    else:
+        print("  FFmpeg engine     : system PATH / fallback")
+    print(f"  Temp download dir : {DOWNLOAD_DIR}")
+    print("  Press Ctrl+C to stop the application.")
+    print("=" * 65)
+
+    if not args.no_browser:
+        def _open_browser():
+            time.sleep(1.0)
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
+
+        threading.Thread(target=_open_browser, daemon=True).start()
+
+    uvicorn.run(app, host=args.host, port=port, log_level="info")
+
+
+if __name__ == "__main__":
+    main()

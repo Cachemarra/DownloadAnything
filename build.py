@@ -3,6 +3,8 @@ Cross-Platform Build Script for Download Anything
 ===================================================
 1. Ensures platform-specific static `ffmpeg` binary exists in `bin/`.
 2. Compiles DownloadAnything into a standalone executable with versioning.
+   - On macOS: Builds native DownloadAnything.app bundle for double-click launch.
+   - On Windows/Linux: Builds single standalone binary.
 """
 
 from __future__ import annotations
@@ -135,7 +137,6 @@ def run_pyinstaller():
     import PyInstaller.__main__
 
     version_str = get_version()
-    app_name = f"DownloadAnything-{version_str}"
     ffmpeg_bin = ensure_ffmpeg()
 
     sep = ";" if sys.platform.startswith("win") else ":"
@@ -164,13 +165,24 @@ def run_pyinstaller():
         "yt_dlp",
     ]
 
-    args = [
-        str(PROJECT_ROOT / "main.py"),
-        f"--name={app_name}",
-        "--onefile",
-        "--noconfirm",
-        "--clean",
-    ]
+    if sys.platform.startswith("darwin"):
+        app_name = "DownloadAnything"
+        args = [
+            str(PROJECT_ROOT / "main.py"),
+            f"--name={app_name}",
+            "--windowed",
+            "--noconfirm",
+            "--clean",
+        ]
+    else:
+        app_name = f"DownloadAnything-{version_str}"
+        args = [
+            str(PROJECT_ROOT / "main.py"),
+            f"--name={app_name}",
+            "--onefile",
+            "--noconfirm",
+            "--clean",
+        ]
 
     for d in add_data:
         args.append(f"--add-data={d}")

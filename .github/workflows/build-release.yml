@@ -27,7 +27,7 @@ jobs:
             ext: zip
           - os: macos-latest
             platform_name: macos-arm64
-            ext: tar.gz
+            ext: zip
 
     steps:
       - name: Checkout Code
@@ -74,14 +74,22 @@ jobs:
             exit 1
           }
 
-      - name: Package Executable (Linux / macOS)
-        if: runner.os != 'Windows'
+      - name: Package Executable (macOS Application Bundle)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          VER="${APP_VERSION}"
+          ART_NAME="DownloadAnything-${VER}-macos-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "dist/DownloadAnything.app" "${ART_NAME}"
+          echo "ARTIFACT_NAME=${ART_NAME}" >> $GITHUB_ENV
+
+      - name: Package Executable (Linux)
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           VER="${APP_VERSION}"
           BIN_NAME="DownloadAnything-${VER}"
-          PLAT="${{ matrix.platform_name }}"
-          ART_NAME="DownloadAnything-${VER}-${PLAT}.${{ matrix.ext }}"
+          ART_NAME="DownloadAnything-${VER}-linux-x86_64.tar.gz"
           chmod +x "dist/${BIN_NAME}"
           tar -czvf "${ART_NAME}" -C dist "${BIN_NAME}"
           echo "ARTIFACT_NAME=${ART_NAME}" >> $GITHUB_ENV

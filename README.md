@@ -67,7 +67,7 @@ The script automatically prepares the virtual environment, verifies dependencies
 
 #### Option B: Standalone Precompiled Executable
 Download the precompiled standalone package for your operating system from the [Releases](../../releases) tab:
-- **macOS**: `DownloadAnything-v1.0.0-macos-arm64.tar.gz` (Apple Silicon) or `macos-x86_64.tar.gz` (Intel)
+- **macOS**: `DownloadAnything-v1.0.0-macos-arm64.tar.gz` (Apple Silicon)
 - **Windows**: `DownloadAnything-v1.0.0-windows-x64.zip` (contains `DownloadAnything-v1.0.0.exe`)
 - **Linux**: `DownloadAnything-v1.0.0-linux-x86_64.tar.gz`
 

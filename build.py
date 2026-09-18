@@ -16,6 +16,19 @@ import ssl
 import sys
 import urllib.request
 
+# Ensure UTF-8 output even in limited terminals (e.g. Windows cp1252)
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 PROJECT_ROOT = pathlib.Path(__file__).parent.resolve()
 BIN_DIR = PROJECT_ROOT / "bin"
 BIN_DIR.mkdir(exist_ok=True)
@@ -74,13 +87,13 @@ def ensure_ffmpeg() -> pathlib.Path:
     target_bin = BIN_DIR / ffmpeg_exe
 
     if target_bin.exists() and os.access(target_bin, os.X_OK):
-        print(f"✓ Found working ffmpeg binary at: {target_bin}")
+        print(f"[OK] Found working ffmpeg binary at: {target_bin}")
         return target_bin
 
     # Try local system ffmpeg first
     system_ffmpeg = shutil.which("ffmpeg")
     if system_ffmpeg:
-        print(f"✓ Copying system ffmpeg from {system_ffmpeg} to {target_bin}")
+        print(f"[OK] Copying system ffmpeg from {system_ffmpeg} to {target_bin}")
         shutil.copy2(system_ffmpeg, target_bin)
         target_bin.chmod(0o755)
         return target_bin
@@ -95,7 +108,7 @@ def ensure_ffmpeg() -> pathlib.Path:
     if not url:
         raise RuntimeError(f"No prebuilt ffmpeg found for platform {plat_key}")
 
-    print(f"⬇ Downloading static ffmpeg for {plat_key[0]}-{plat_key[1]} from {url} ...")
+    print(f"[+] Downloading static ffmpeg for {plat_key[0]}-{plat_key[1]} from {url} ...")
     gz_archive = BIN_DIR / f"{ffmpeg_exe}.gz"
 
     ctx = _create_ssl_context()
@@ -103,7 +116,7 @@ def ensure_ffmpeg() -> pathlib.Path:
     with urllib.request.urlopen(req, context=ctx) as resp, open(gz_archive, "wb") as f_out:
         shutil.copyfileobj(resp, f_out)
 
-    print(f"📦 Extracting {gz_archive.name} -> {target_bin.name} ...")
+    print(f"[*] Extracting {gz_archive.name} -> {target_bin.name} ...")
     with gzip.open(gz_archive, "rb") as f_in, open(target_bin, "wb") as f_out:
         shutil.copyfileobj(f_in, f_out)
 
@@ -111,7 +124,7 @@ def ensure_ffmpeg() -> pathlib.Path:
     target_bin.chmod(0o755)
 
     if target_bin.exists():
-        print(f"✓ Successfully prepared ffmpeg at {target_bin}")
+        print(f"[OK] Successfully prepared ffmpeg at {target_bin}")
     else:
         raise RuntimeError(f"Failed to prepare ffmpeg at {target_bin}")
 
@@ -168,7 +181,7 @@ def run_pyinstaller():
     for h in hidden_imports:
         args.append(f"--hidden-import={h}")
 
-    print(f"🚀 Running PyInstaller for {app_name} with args:", args)
+    print(f"[>] Running PyInstaller for {app_name} with args:", args)
     PyInstaller.__main__.run(args)
 
 

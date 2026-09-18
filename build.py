@@ -7,23 +7,25 @@ Cross-Platform Build Script for Download Anything
 
 from __future__ import annotations
 
+import gzip
 import os
 import pathlib
 import platform
 import shutil
+import ssl
 import sys
 import urllib.request
-import zipfile
-import tarfile
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.resolve()
 BIN_DIR = PROJECT_ROOT / "bin"
 BIN_DIR.mkdir(exist_ok=True)
 
-FFBINARIES_URLS = {
-    "linux": "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v4.4.1/ffmpeg-4.4.1-linux-64.zip",
-    "win32": "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v4.4.1/ffmpeg-4.4.1-win-64.zip",
-    "darwin": "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v4.4.1/ffmpeg-4.4.1-osx-64.zip",
+FFMPEG_GZ_URLS: dict[tuple[str, str], str] = {
+    ("darwin", "arm64"): "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-darwin-arm64.gz",
+    ("darwin", "x86_64"): "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-darwin-x64.gz",
+    ("linux", "x86_64"): "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-linux-x64.gz",
+    ("linux", "arm64"): "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-linux-arm64.gz",
+    ("win32", "x86_64"): "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz",
 }
 
 
@@ -39,12 +41,40 @@ def get_version() -> str:
         return "v1.0.0"
 
 
+def get_platform_key() -> tuple[str, str]:
+    if sys.platform.startswith("win"):
+        os_name = "win32"
+    elif sys.platform.startswith("darwin"):
+        os_name = "darwin"
+    else:
+        os_name = "linux"
+
+    mach = platform.machine().lower()
+    if mach in ("arm64", "aarch64"):
+        arch = "arm64"
+    else:
+        arch = "x86_64"
+
+    return os_name, arch
+
+
+def _create_ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        try:
+            return ssl.create_default_context()
+        except Exception:
+            return ssl._create_unverified_context()
+
+
 def ensure_ffmpeg() -> pathlib.Path:
     ffmpeg_exe = "ffmpeg.exe" if sys.platform.startswith("win") else "ffmpeg"
     target_bin = BIN_DIR / ffmpeg_exe
 
-    if target_bin.exists():
-        print(f"✓ Found ffmpeg binary at: {target_bin}")
+    if target_bin.exists() and os.access(target_bin, os.X_OK):
+        print(f"✓ Found working ffmpeg binary at: {target_bin}")
         return target_bin
 
     # Try local system ffmpeg first
@@ -56,24 +86,34 @@ def ensure_ffmpeg() -> pathlib.Path:
         return target_bin
 
     # Download prebuilt static ffmpeg
-    plat_key = "win32" if sys.platform.startswith("win") else ("darwin" if sys.platform.startswith("darwin") else "linux")
-    url = FFBINARIES_URLS.get(plat_key)
-    print(f"⬇ Downloading static ffmpeg for {plat_key} from {url} ...")
+    plat_key = get_platform_key()
+    url = FFMPEG_GZ_URLS.get(plat_key)
+    if not url:
+        # Fallback to x86_64 if specific arch not found
+        url = FFMPEG_GZ_URLS.get((plat_key[0], "x86_64"))
 
-    archive_path = BIN_DIR / "ffmpeg_download.zip"
-    urllib.request.urlretrieve(url, archive_path)
+    if not url:
+        raise RuntimeError(f"No prebuilt ffmpeg found for platform {plat_key}")
 
-    with zipfile.ZipFile(archive_path, "r") as zip_ref:
-        zip_ref.extractall(BIN_DIR)
+    print(f"⬇ Downloading static ffmpeg for {plat_key[0]}-{plat_key[1]} from {url} ...")
+    gz_archive = BIN_DIR / f"{ffmpeg_exe}.gz"
 
-    if archive_path.exists():
-        archive_path.unlink()
+    ctx = _create_ssl_context()
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (DownloadAnything Build)"})
+    with urllib.request.urlopen(req, context=ctx) as resp, open(gz_archive, "wb") as f_out:
+        shutil.copyfileobj(resp, f_out)
+
+    print(f"📦 Extracting {gz_archive.name} -> {target_bin.name} ...")
+    with gzip.open(gz_archive, "rb") as f_in, open(target_bin, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    gz_archive.unlink(missing_ok=True)
+    target_bin.chmod(0o755)
 
     if target_bin.exists():
-        target_bin.chmod(0o755)
-        print(f"✓ Successfully extracted ffmpeg to {target_bin}")
+        print(f"✓ Successfully prepared ffmpeg at {target_bin}")
     else:
-        print(f"⚠️ Warning: ffmpeg extraction finish check: {target_bin} not found directly.")
+        raise RuntimeError(f"Failed to prepare ffmpeg at {target_bin}")
 
     return target_bin
 
@@ -86,10 +126,10 @@ def run_pyinstaller():
     ffmpeg_bin = ensure_ffmpeg()
 
     sep = ";" if sys.platform.startswith("win") else ":"
-    
+
     add_data = [
-        f"static{sep}static",
-        f"templates{sep}templates",
+        f"{PROJECT_ROOT / 'static'}{sep}static",
+        f"{PROJECT_ROOT / 'templates'}{sep}templates",
     ]
 
     add_binary = [
@@ -105,6 +145,7 @@ def run_pyinstaller():
         "uvicorn.protocols.websockets.auto",
         "uvicorn.lifespan.on",
         "uvicorn.lifespan.off",
+        "starlette",
         "sse_starlette",
         "fastapi",
         "yt_dlp",
@@ -114,6 +155,7 @@ def run_pyinstaller():
         str(PROJECT_ROOT / "main.py"),
         f"--name={app_name}",
         "--onefile",
+        "--noconfirm",
         "--clean",
     ]
 

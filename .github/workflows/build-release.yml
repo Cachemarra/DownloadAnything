@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Executable (${{ matrix.os }})
+    name: Build Executable (${{ matrix.platform_name }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -67,8 +67,13 @@ jobs:
           $ver = $env:APP_VERSION
           $binName = "DownloadAnything-${ver}.exe"
           $artName = "DownloadAnything-${ver}-windows-x64.zip"
-          Compress-Archive -Path "dist/${binName}" -DestinationPath $artName
-          echo "ARTIFACT_NAME=${artName}" >> $env:GITHUB_ENV
+          if (Test-Path "dist\${binName}") {
+            Compress-Archive -Path "dist\${binName}" -DestinationPath $artName -Force
+            echo "ARTIFACT_NAME=${artName}" >> $env:GITHUB_ENV
+          } else {
+            echo "Error: dist\${binName} not found!"
+            exit 1
+          }
 
       - name: Package Executable (Linux / macOS)
         if: runner.os != 'Windows'
@@ -82,16 +87,32 @@ jobs:
           tar -czvf "${ART_NAME}" -C dist "${BIN_NAME}"
           echo "ARTIFACT_NAME=${ART_NAME}" >> $GITHUB_ENV
 
-      - name: Upload Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform_name }}
+          name: binary-${{ matrix.platform_name }}
           path: ${{ env.ARTIFACT_NAME }}
 
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+          merge-multiple: true
+
+      - name: Display Release Files
+        run: |
+          echo "Release artifacts to publish:"
+          ls -lh release_artifacts/
+
       - name: Publish to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ARTIFACT_NAME }}
+          files: release_artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -53,19 +53,32 @@ Make sure you have Python 3.9+ installed on your system. Having **Node.js** inst
    pip install -r requirements.txt
    ```
 
-### Running the App
+### 🚀 Running the App
 
-Start the development server using the startup script:
+#### Option A: One-Click Startup (Recommended)
+- **macOS / Linux**:
+  ```bash
+  ./run.sh
+  ```
+- **Windows**:
+  Double-click `run.bat` (or run in Command Prompt / PowerShell: `run.bat`).
+
+The script automatically prepares the virtual environment, verifies dependencies, starts the server, and opens your browser to `http://127.0.0.1:8000`.
+
+#### Option B: Standalone Precompiled Executable
+Download the precompiled standalone package for your operating system from the [Releases](../../releases) tab:
+- **macOS**: `DownloadAnything-v1.0.0-macos-arm64.tar.gz` (Apple Silicon) or `macos-x86_64.tar.gz` (Intel)
+- **Windows**: `DownloadAnything-v1.0.0-windows-x64.zip` (contains `DownloadAnything-v1.0.0.exe`)
+- **Linux**: `DownloadAnything-v1.0.0-linux-x86_64.tar.gz`
+
+Extract and double-click or run from terminal — **no Python, pip, or external dependencies required!** A static FFmpeg binary is bundled directly into the executable.
+
+#### Option C: Build Standalone Executable Locally
+To compile the standalone binary locally for your current OS:
 ```bash
-bash run.sh
+python build.py
 ```
-
-Or start Uvicorn directly:
-```bash
-uvicorn main:app --reload
-```
-
-Once running, open your browser and navigate to `http://127.0.0.1:8000`.
+The compiled executable will be generated inside the `dist/` directory.
 
 ---
 

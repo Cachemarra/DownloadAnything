@@ -11,6 +11,7 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import pathlib
 import re
@@ -39,6 +40,10 @@ else:
 
 DOWNLOAD_DIR = pathlib.Path(tempfile.gettempdir()) / "download_anything"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    DOWNLOAD_DIR.chmod(0o700)
+except OSError:
+    pass
 
 STATIC_DIR = BASE_DIR / "static"
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -103,7 +108,7 @@ app = FastAPI(title="Download Anything", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -122,6 +127,16 @@ class InfoRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_TASK_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def _validate_task_id(task_id: str) -> str:
+    """Validate and sanitise task_id to prevent path traversal."""
+    if not task_id or not _TASK_ID_RE.match(task_id) or len(task_id) > 64:
+        raise HTTPException(status_code=400, detail="Invalid task ID.")
+    return task_id.replace("-", "")[:16]
+
 
 def _clean_error_message(raw_msg: str) -> str:
     clean = re.sub(r"\x1b\[[0-9;]*[mGKB]", "", raw_msg)
@@ -411,11 +426,11 @@ async def progress_stream(
     SSE endpoint. Starts the yt-dlp download in a thread executor, then streams
     progress events. Sends done=true ONLY after yt_dlp.download() fully returns.
     """
+    safe_task = _validate_task_id(task_id)
     task_progress[task_id] = {"progress": 0, "done": False, "error": None, "started": False}
 
     if url and quality:
         task_progress[task_id]["started"] = True
-        safe_task = task_id.replace("-", "")[:16]
         output_template = str(DOWNLOAD_DIR / f"{safe_task}.%(ext)s")
         opts = _ydl_opts_for_quality(quality, task_id, output_template)
 
@@ -494,7 +509,7 @@ async def progress_stream(
 
 
 def _json_str(s: str) -> str:
-    return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
+    return json.dumps(s)
 
 
 @app.get("/api/file/{task_id}")
@@ -507,8 +522,14 @@ async def deliver_file(
     Deliver the downloaded file. Called by the frontend only after receiving done=true.
     Content-Disposition headers are strictly latin-1 encoded for Starlette safety.
     """
-    safe_task = task_id.replace("-", "")[:16]
+    safe_task = _validate_task_id(task_id)
     candidates = list(DOWNLOAD_DIR.glob(f"{safe_task}.*"))
+
+    # Ensure all candidates are strictly inside DOWNLOAD_DIR
+    candidates = [
+        c for c in candidates
+        if c.resolve().is_relative_to(DOWNLOAD_DIR.resolve())
+    ]
 
     if not candidates:
         raise HTTPException(
